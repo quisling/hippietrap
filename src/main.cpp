@@ -1,16 +1,23 @@
 #include <FastLED.h>
+#define NUM_STRIPS 3
+#define NUM_LEDS_PER_STRIP 7
+#define NUM_LEDS NUM_LEDS_PER_STRIP * NUM_STRIPS
 
-#define LED_PIN     12
+#define DATA1 12
+#define DATA2  1
+#define DATA3  2
 #define COLOR_ORDER GRB
 #define CHIPSET     WS2812B
-#define NUM_LEDS    24
 
 #define BRIGHTNESS  10
-#define FRAMES_PER_SECOND 60
+#define FRAMES_PER_SECOND 10
+
+CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 
 bool gReverseDirection = false;
+int chaseLed=0;
+bool blinker = true;
 
-CRGB leds[NUM_LEDS];
 
 CRGBPalette16 gPal;
 
@@ -90,37 +97,32 @@ void Fire2012WithPalette()
     }
 }
 
-// Fire2012 with programmable Color Palette
-//
-// This code is the same fire simulation as the original "Fire2012",
-// but each heat cell's temperature is translated to color through a FastLED
-// programmable color palette, instead of through the "HeatColor(...)" function.
-//
-// Four different static color palettes are provided here, plus one dynamic one.
-// 
-// The three static ones are: 
-//   1. the FastLED built-in HeatColors_p -- this is the default, and it looks
-//      pretty much exactly like the original Fire2012.
-//
-//  To use any of the other palettes below, just "uncomment" the corresponding code.
-//
-//   2. a gradient from black to red to yellow to white, which is
-//      visually similar to the HeatColors_p, and helps to illustrate
-//      what the 'heat colors' palette is actually doing,
-//   3. a similar gradient, but in blue colors rather than red ones,
-//      i.e. from black to blue to aqua to white, which results in
-//      an "icy blue" fire effect,
-//   4. a simplified three-step gradient, from black to red to white, just to show
-//      that these gradients need not have four components; two or
-//      three are possible, too, even if they don't look quite as nice for fire.
-//
-// The dynamic palette shows how you can change the basic 'hue' of the
-// color palette every time through the loop, producing "rainbow fire".
-
+void ChaserLed(){
+  
+    if (blinker){
+      fill_solid(leds, NUM_LEDS, CRGB::Red); // Turn all off
+      blinker = false;
+    }else{
+      fill_solid(leds, NUM_LEDS, CRGB::Green); // Turn all off
+      blinker = true;
+    }
+    
+    leds[chaseLed] = CRGB::Black;
+    chaseLed++;
+    if (chaseLed > 100)
+    {
+      chaseLed = 0;
+    }
+      
+}
 void setup() {
   delay(3000); // sanity delay
-  FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.setBrightness( BRIGHTNESS );
+    // tell FastLED there's 60 NEOPIXEL leds on pin 10, starting at index 0 in the led array
+    FastLED.addLeds<NEOPIXEL, DATA1>(leds, 0, NUM_LEDS_PER_STRIP);
+    // tell FastLED there's 60 NEOPIXEL leds on pin 11, starting at index 60 in the led array
+    FastLED.addLeds<NEOPIXEL, DATA2>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+    // tell FastLED there's 60 NEOPIXEL leds on pin 12, starting at index 120 in the led array
+    FastLED.addLeds<NEOPIXEL, DATA3>(leds, 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);FastLED.setBrightness( BRIGHTNESS );
 
   // This first palette is the basic 'black body radiation' colors,
   // which run from black to red to bright yellow to white.
@@ -143,6 +145,7 @@ void loop()
   // Add entropy to random number generator; we use a lot of it.
   random16_add_entropy( random());
 
+
   // Fourth, the most sophisticated: this one sets up a new palette every
   // time through the loop, based on a hue that changes every time.
   // The palette is a gradient from black, to a dark color based on the hue,
@@ -155,8 +158,8 @@ void loop()
   //   gPal = CRGBPalette16( CRGB::Black, darkcolor, lightcolor, CRGB::White);
 
 
-  Fire2012WithPalette(); // run simulation frame, using palette colors
-  
+  //Fire2012WithPalette(); // run simulation frame, using palette colors
+  ChaserLed();
   FastLED.show(); // display this frame#include <Arduino.h>
   FastLED.delay(1000 / FRAMES_PER_SECOND);
 
