@@ -1,4 +1,5 @@
 #include <FastLED.h>
+
 #define NUM_STRIPS 16
 #define NUM_LEDS_PER_STRIP 7
 #define NUM_LEDS NUM_LEDS_PER_STRIP * NUM_STRIPS
@@ -20,15 +21,13 @@
 #define DATA15  5
 #define DATA16  4
 
-#define COLOR_ORDER GRB
-#define CHIPSET     WS2812B
+#define CHIPSET     WS2815
 
 #define BRIGHTNESS  10
 #define FRAMES_PER_SECOND 5
 
 CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 
-bool gReverseDirection = false;
 int chaseLed=0;
 bool blinker = true;
 
