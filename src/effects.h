@@ -1,2 +1,3 @@
 #pragma once
-void ChaserLed(CRGB* leds,int& chaseLed, bool& blinker);
+void chaserLed(CRGB* leds,int& chaseLed, bool& blinker);
+void wobbleRing(CRGB* leds,int& chaseLed);

@@ -3,7 +3,7 @@
 #include "globals.h"
 
 #define BRIGHTNESS  10
-#define FRAMES_PER_SECOND 5
+#define FRAMES_PER_SECOND 30
 
 CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 
@@ -37,11 +37,12 @@ void setup() {
 
 void loop()
 {
-  // Add entropy to random number generator; we use a lot of it.
+  // Add entropy to random number generator
   random16_add_entropy( random());
 
-  ChaserLed(leds, chaseLed, blinker);
-  FastLED.show(); // display this frame#include <Arduino.h>
+  chaserLed(leds, chaseLed, blinker);
+  //wobbleRing(leds, chaseLed);
+  FastLED.show(); // display this frame
   FastLED.delay(1000 / FRAMES_PER_SECOND);
 
 }

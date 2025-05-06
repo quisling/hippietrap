@@ -1,6 +1,6 @@
 #pragma once
-#define NUM_STRIPS 16
-#define NUM_LEDS_PER_STRIP 7
+#define NUM_STRIPS 12
+#define NUM_LEDS_PER_STRIP 9
 #define NUM_LEDS NUM_LEDS_PER_STRIP * NUM_STRIPS
 
 #define DATA1   14
