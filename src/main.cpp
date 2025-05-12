@@ -2,10 +2,11 @@
 #include "effects.h"
 #include "globals.h"
 
-#define BRIGHTNESS  10
-#define FRAMES_PER_SECOND 30
 
-CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+#define BRIGHTNESS  10
+#define FRAMES_PER_SECOND 10
+
+CRGB leds[NUM_LEDS];
 
 int chaseLed=0;
 bool blinker = true;
@@ -32,7 +33,8 @@ void setup() {
     FastLED.addLeds<NEOPIXEL, DATA16>(leds, 15 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
     
     FastLED.setBrightness( BRIGHTNESS );
-
+    Serial.begin(115200); // Start serial at 115200 baud
+    Serial.println("Hello from ESP32-S3!");
 }
 
 void loop()
@@ -40,8 +42,9 @@ void loop()
   // Add entropy to random number generator
   random16_add_entropy( random());
 
-  chaserLed(leds, chaseLed, blinker);
+  //chaserLed(leds, chaseLed, blinker);
   //wobbleRing(leds, chaseLed);
+  clockLed(leds);
   FastLED.show(); // display this frame
   FastLED.delay(1000 / FRAMES_PER_SECOND);
 

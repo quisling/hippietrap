@@ -13,10 +13,11 @@ void chaserLed(CRGB* leds, int& chaseLed,bool& blinker ){
       blinker = true;
     }*/
     fill_solid(leds, NUM_LEDS, CRGB::Black);
-    
-    leds[chaseLed] = CRGB::Black;
-    leds[chaseLed+1] = CRGB::Blue;
-    leds[chaseLed+2] = CRGB::White;
+    leds[chaseLed] = CRGB::Purple;
+    leds[((chaseLed+1)%NUM_LEDS)] = CRGB::Blue;
+    leds[((chaseLed+2)%NUM_LEDS)] = CRGB::White;
+    leds[((chaseLed+3)%NUM_LEDS)] = CRGB::Orange;
+    leds[((chaseLed+4)%NUM_LEDS)] = CRGB::Red;
     chaseLed++;
     if (chaseLed > NUM_LEDS)
     {
