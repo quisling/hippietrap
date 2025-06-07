@@ -1,5 +1,5 @@
 #include <FastLED.h>
-#include <DFRobot_BMI160.h> // BMI160 library
+//#include <DFRobot_BMI160.h> // BMI160 library
 #include <Wire.h>      // I2C library
 
 #include "effects.h"
@@ -7,7 +7,7 @@
 
 
 #define BRIGHTNESS  10
-#define FRAMES_PER_SECOND 10
+#define FRAMES_PER_SECOND 1000
 #define I2C_SDA 4
 #define I2C_SCL 5
 #define I2C_ADDR 0x68
@@ -79,7 +79,8 @@ void loop()
   random16_add_entropy( random());
 
   //chaserLed(leds, chaseLed, blinker);
-  wobbleRing(leds, chaseLed);
+  powerTest(leds, chaseLed);
+  //wobbleRing(leds, chaseLed);
   //clockLed(leds);
   FastLED.show(); // display this frame
   FastLED.delay(1000 / FRAMES_PER_SECOND);
