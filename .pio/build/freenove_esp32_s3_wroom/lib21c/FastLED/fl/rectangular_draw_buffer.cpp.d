@@ -1,0 +1,27 @@
+.pio/build/freenove_esp32_s3_wroom/lib21c/FastLED/fl/rectangular_draw_buffer.cpp.o: \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/rectangular_draw_buffer.cpp \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/rectangular_draw_buffer.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/map.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/namespace.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/vector.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/inplacenew.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/scoped_ptr.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/insert_result.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/template_magic.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/pair.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/assert.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/warn.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/dbg.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/strstream.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/crgb.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/chsv.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/color.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/lib8tion/types.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/force_inline.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/str.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/ptr.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/math_macros.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/slice.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/rgbw.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/eorder.h \
+ .pio/libdeps/freenove_esp32_s3_wroom/FastLED/src/fl/allocator.h
