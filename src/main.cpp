@@ -7,12 +7,15 @@
 #include "dsps_fft2r.h"
 #include "dsps_wind.h"
 
+// Button
 volatile bool buttonPressed = false;
+uint8_t menuChoice = 1;
+#define MENU_MAX 3
 
 #include "effects.h"
 #include "globals.h"
 
-#define SERIAL_ENABLED true
+#define DEBUG_MODE true
 
 #define BRIGHTNESS  150
 #define FRAMES_PER_SECOND 1000
@@ -25,9 +28,12 @@ uint16_t frame = 0;
 
 CRGB leds[NUM_LEDS];
 
-int32_t raw_samples[512];
 float fft_input[FFT_SIZE];    // Real signal input
 float complex_buffer[FFT_SIZE * 2]; // Interleaved real/imaginary data
+// Frequency bands (adjust based on your needs)
+const int bands[] = {60, 250, 500, 1000, 2000, 4000, 6000, 8000}; // Hz
+const int numBands = sizeof(bands)/sizeof(bands[0]) - 1;
+float bandMagnitudes[8] = {0}; // Stores magnitude for each band
 
 //DFRobot_BMI160 bmi160;
 
@@ -37,9 +43,9 @@ bool blinker = true;
 //DFRobot_BMI160 bmi160;
 const int8_t i2c_addr = 0x69;
 
-//void IRAM_ATTR handleButton() {
-//  buttonPressed = true;         // Set flag when button is pressed
-//}
+void IRAM_ATTR handleButton() {
+  buttonPressed = true;         // Set flag when button is pressed
+}
 
 void BMI_setup(){
   Serial.begin(115200);
@@ -91,56 +97,76 @@ void i2c_mic_setup(){
 void print_mic_data(){
   // read from the I2S device
   size_t bytes_read = 0;
-  i2s_read(I2S_NUM_0, raw_samples, sizeof(int32_t) * 512, &bytes_read, portMAX_DELAY);
+  i2s_read(I2S_NUM_0, fft_input, FFT_SIZE * sizeof(float), &bytes_read, portMAX_DELAY);
   int samples_read = bytes_read / sizeof(int32_t);
   // dump the samples out to the serial channel.
   for (int i = 0; i < samples_read; i++)
   {
-    Serial.printf("%ld\n", raw_samples[i]);
+    Serial.printf("%ld\n", fft_input[i]);
   }
 }
 
 void fastFourierTransformAudio(){
   size_t bytes_read;
   
-  // 3. Read audio samples from INMP441
+  // 3. Read audio samples
   i2s_read(I2S_NUM_0, fft_input, FFT_SIZE * sizeof(float), &bytes_read, portMAX_DELAY);
-  
-  // 4. Convert 24-bit audio to 32-bit float (INMP441 data is MSB-aligned)
+
+  // 4. Convert to float and apply window
   for (int i = 0; i < FFT_SIZE; i++) {
-    int32_t raw_sample = ((int32_t)fft_input[i]) >> 8; // Discard lower 8 bits
-    complex_buffer[i * 2] = (float)raw_sample / 8388608.0; // Normalize to [-1, 1]
+    int32_t raw_sample = ((int32_t)fft_input[i]) >> 8;
+    complex_buffer[i * 2] = (float)raw_sample / 8388608.0; // Normalize
     complex_buffer[i * 2 + 1] = 0;
   }
-
-  // 5. Apply Hann window
   dsps_wind_hann_f32(complex_buffer, FFT_SIZE);
 
-  // 6. Compute FFT
+  // 5. Compute FFT
   dsps_fft2r_fc32(complex_buffer, FFT_SIZE);
-  dsps_bit_rev_fc32(complex_buffer, FFT_SIZE); // Reorder output
+  dsps_bit_rev_fc32(complex_buffer, FFT_SIZE);
 
-  // 7. Calculate magnitude spectrum
-  float magnitude[FFT_SIZE / 2];
-  for (int i = 0; i < FFT_SIZE / 2; i++) {
-    float real = complex_buffer[i * 2];
-    float imag = complex_buffer[i * 2 + 1];
-    magnitude[i] = sqrtf(real * real + imag * imag);
+  // 6. Calculate magnitudes and group into bands
+  float binWidth = (float)SAMPLE_RATE / FFT_SIZE;
+  for (int band = 0; band < numBands; band++) {
+    int startBin = (int)(bands[band] / binWidth);
+    int endBin = (int)(bands[band+1] / binWidth);
+    bandMagnitudes[band] = 0;
+    
+    for (int i = startBin; i < endBin; i++) {
+      float real = complex_buffer[i * 2];
+      float imag = complex_buffer[i * 2 + 1];
+      bandMagnitudes[band] += sqrtf(real*real + imag*imag);
+    }
+    bandMagnitudes[band] /= (endBin - startBin); // Average
   }
 
-  // 8. Find peak frequency
-  int peak_bin = 0;
-  float peak_val = 0;
-  for (int i = 1; i < FFT_SIZE / 2; i++) { // Skip DC
-    if (magnitude[i] > peak_val) {
-      peak_val = magnitude[i];
-      peak_bin = i;
+  // 7. Map magnitudes to LEDs
+  for (int i = 0; i < numBands; i++) {
+    float magnitude = bandMagnitudes[i];
+    magnitude = log10(magnitude + 1) * 20; // Convert to dB-like scale
+    int ledLevel = map(constrain(magnitude, 0, 40), 0, 40, 0, NUM_LEDS_PER_STRIP);
+    
+    // Light up LEDs (example: 4 bands → 4 LED segments)
+    int ledsPerBand = NUM_LEDS / numBands;
+    for (int j = 0; j < ledsPerBand; j++) {
+      int pos = i * ledsPerBand + j;
+      leds[pos] = (j < ledLevel) ? CRGB(CHSV(i * 40, 255, 255)) : CRGB::Black;
+
+    }
+    if (DEBUG_MODE){
+      Serial.print(ledLevel);
+      Serial.print(" ");
     }
   }
-  float peak_freq = (peak_bin * SAMPLE_RATE) / (float)FFT_SIZE;
-  
-  Serial.printf("Dominant frequency: %.1f Hz\n", peak_freq);
-  delay(100);
+  if (DEBUG_MODE) {
+    for (int i = 0; i < numBands; i++) {
+      Serial.print(bandMagnitudes[i]);
+      Serial.print(" "); // Add a space between numbers
+    }
+    Serial.println(); // Newline after printing
+  }
+
+  // 8. Add decay effect for smooth transitions
+  fadeToBlackBy(leds, NUM_LEDS, 50);
 }
 
 void fastLedSetup(){
@@ -168,17 +194,16 @@ void fastLedSetup(){
 
 void setup() {
   delay(3000); // sanity delay
-  if (SERIAL_ENABLED){
+  if (DEBUG_MODE){
     Serial.begin(115200); // Start serial at 115200 baud
-    Serial.println("Hello from ESP32-S3!");
   }
   fastLedSetup();
   FastLED.setBrightness( BRIGHTNESS );
 
   i2c_mic_setup();
 
-  //pinMode(BUTTON_PIN, INPUT_PULLUP); // Use internal pull-up resistor
-  //attachInterrupt(BUTTON_PIN, handleButton, FALLING);
+  pinMode(BUTTON_PIN, INPUT_PULLUP); // Use internal pull-up resistor
+  attachInterrupt(BUTTON_PIN, handleButton, FALLING);
 
     //Wire.begin(I2C_SDA, I2C_SCL); // SDA = GPIO47, SCL = GPIO21
     //if (bmi160.I2cInit(I2C_ADDR) != BMI160_OK) {
@@ -186,28 +211,68 @@ void setup() {
     //  while (1);
     //}
 }
+void buttonHandler(){
+  bool setBrightness = false;
+  if (buttonPressed) {
+    if (DEBUG_MODE) Serial.println("Button was pressed!");
+    buttonPressed = false;      // Reset flag
+    menuIndicator(leds,menuChoice);
+    FastLED.show();
+    delay(1000);
+    while (buttonPressed){
+      setBrightness = true;
+      buttonPressed = false;
+      brightness+=100;
+      if (brightness >=250) brightness = 10;
+      if (DEBUG_MODE) Serial.print("Brightness: "); Serial.println(brightness);
+      FastLED.setBrightness( brightness);
+      FastLED.show();
+      delay(1000);
+    }
+    if (setBrightness) return;
+    menuChoice++;
+    if (menuChoice > MENU_MAX) menuChoice = 1;
+    Serial.println(brightness);
+  }
+}
 
 void loop()
 {
+  if (DEBUG_MODE) Serial.println("Hello hello");
   // Add entropy to random number generator
   //random16_add_entropy( random());
 
+  switch (menuChoice){
+    case 1:
+      rainbowFlow(leds,chaseLed);
+      if (DEBUG_MODE) Serial.println("Menu Option Rainbow Flow"); delay(1000);
+    break;
+    case 2:
+      fastFourierTransformAudio();
+      if (DEBUG_MODE) Serial.println("Menu Option Fourier Transform"); delay(1000);
+    break;
+    case 3:
+      powerTest(leds, blinker);
+      if (DEBUG_MODE) Serial.println("Menu Option Power Test"); delay(1000);
+    break;
+    case 4:
+    
+    break;
+    default:
+
+    break;
+  }
+  
   //chaserLed(leds, chaseLed, blinker);
   //powerTest(leds, blinker);
-  rainbowFlow(leds,chaseLed);
+  //rainbowFlow(leds,chaseLed);
   //wobbleRing(leds, chaseLed);
   //clockLed(leds);
   //print_mic_data();
-  fastFourierTransformAudio();
-  /*if (buttonPressed) {
-    Serial.println("Button was pressed!");
-    buttonPressed = false;      // Reset flag
-    // Add your logic here, e.g., increment a counter or toggle a value
-  }
-    */
+  //fastFourierTransformAudio();
+  buttonHandler();
   FastLED.show(); // display this frame
   //FastLED.delay(1000 / FRAMES_PER_SECOND);
-  //Serial.println("Hello hello");
   /*frame++;
   brightness = frame%100;
   if (brightness>=250){
