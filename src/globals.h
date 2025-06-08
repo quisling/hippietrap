@@ -20,6 +20,15 @@
 #define DATA15  5
 #define DATA16  4
 
+#define MIC_I2C_WS 2
+#define MIC_I2C_SCK 38
+#define MIC_I2C_SD 1
+#define SAMPLE_RATE 16000     // 16 kHz
+#define FFT_SIZE 1024         // Must be power of 2
+#define MIC_SAMPLE_BITS 32    // INMP441 uses 32-bit frames (24-bit data)
+
+#define BUTTON_PIN 48
+
 #define CHIPSET     WS2815
 
 #if LARGE_PARASOL 
