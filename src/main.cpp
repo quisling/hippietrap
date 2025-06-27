@@ -1,5 +1,5 @@
 #include <FastLED.h>
-//#include <DFRobot_BMI160.h> // BMI160 library
+#include <DFRobot_BMI160.h> // BMI160 library
 #include <Wire.h>      // I2C library
 
 // Microphone
@@ -19,9 +19,9 @@ uint8_t menuChoice = 1;
 
 #define BRIGHTNESS  150
 #define FRAMES_PER_SECOND 1000
-#define I2C_SDA 4
-#define I2C_SCL 5
-#define I2C_ADDR 0x68
+#define I2C_SDA 47
+#define I2C_SCL 21
+#define I2C_ADDR 0x69
 
 uint8_t brightness = 10;
 uint16_t frame = 0;
@@ -35,12 +35,11 @@ const int bands[] = {60, 250, 500, 1000, 2000, 4000, 6000, 8000}; // Hz
 const int numBands = sizeof(bands)/sizeof(bands[0]) - 1;
 float bandMagnitudes[8] = {0}; // Stores magnitude for each band
 
-//DFRobot_BMI160 bmi160;
+DFRobot_BMI160 bmi160;
 
 int chaseLed=0;
 bool blinker = true;
 
-//DFRobot_BMI160 bmi160;
 const int8_t i2c_addr = 0x69;
 
 void IRAM_ATTR handleButton() {
@@ -48,21 +47,26 @@ void IRAM_ATTR handleButton() {
 }
 
 void BMI_setup(){
-  Serial.begin(115200);
-  delay(100);
-  Serial.println("Hello!");
-  
-  /*/init the hardware bmin160  
+  Wire.end();
+  Wire.begin(I2C_SDA, I2C_SCL); // SDA = GPIO47, SCL = GPIO21
+  //Wire.setPins( I2C_SDA,  I2C_SCL);
+  int rslt = bmi160.I2cInit(I2C_ADDR);
+  if (rslt != BMI160_OK) {
+    Serial.print("BMI160 init failed with: ");
+    Serial.println(rslt);
+    while (1) {
+    }
+  }
+
+  //init the hardware bmin160  
   if (bmi160.softReset() != BMI160_OK){
-    
     while(1) Serial.println("reset false");
   }
   
   //set and init the bmi160 i2c address
-  if (bmi160.I2cInit(i2c_addr) != BMI160_OK){
+  if (bmi160.I2cInit(I2C_ADDR) != BMI160_OK){
     while(1) Serial.println("init false");
-    //
-  }*/
+  }
 }
 
 void i2c_mic_setup(){
@@ -205,11 +209,7 @@ void setup() {
   pinMode(BUTTON_PIN, INPUT_PULLUP); // Use internal pull-up resistor
   attachInterrupt(BUTTON_PIN, handleButton, FALLING);
 
-    //Wire.begin(I2C_SDA, I2C_SCL); // SDA = GPIO47, SCL = GPIO21
-    //if (bmi160.I2cInit(I2C_ADDR) != BMI160_OK) {
-    //  Serial.println("BMI160 init failed!");
-    //  while (1);
-    //}
+  BMI_setup();
 }
 void buttonHandler(){
   bool setBrightness = false;
@@ -236,12 +236,48 @@ void buttonHandler(){
   }
 }
 
+void bmi_loop(){  
+  while(true){
+    int i = 0;
+    int rslt;
+    int16_t accelGyro[6]={0}; 
+    
+    //get both accel and gyro data from bmi160
+    //parameter accelGyro is the pointer to store the data
+    rslt = bmi160.getAccelGyroData(accelGyro);
+    if(rslt == 0){
+      for(i=0;i<6;i++){
+        if (i<3){
+          //the first three are gyro data
+          Serial.print(accelGyro[i]*3.14/180.0);Serial.print("\t");
+        }else{
+          //the following three data are accel data
+          Serial.print(accelGyro[i]/16384.0);Serial.print("\t");
+        }
+      }
+      Serial.println();
+    }else{
+      Serial.println("err");
+    }
+    delay(100);
+    
+    //only read accel data from bmi160
+    int16_t onlyAccel[3]={0};
+    bmi160.getAccelData(onlyAccel);
+    
+
+    //only read gyro data from bmi160
+    int16_t onlyGyro[3]={0};
+    bmi160.getGyroData(onlyGyro);
+  }
+}
+
 void loop()
 {
   if (DEBUG_MODE) Serial.println("Hello hello");
   // Add entropy to random number generator
   //random16_add_entropy( random());
-
+  bmi_loop();
   switch (menuChoice){
     case 1:
       rainbowFlow(leds,chaseLed);
