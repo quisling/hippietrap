@@ -42,19 +42,22 @@ void debugBillman(CRGB* leds, int& input_variable ){
    fillSpan(leds, 60, 60, CRGB::Cyan);
    fillSpan(leds, 70, 70, CRGB::Green);
    fillSpan(leds, 80, 80, CRGB::Cyan);
-   
    fillSpan(leds, 90, 90, CRGB::Green);
    fillSpan(leds, 100, 100, CRGB::Cyan);
-   
-   fillSpan(leds, 105, 105, CRGB::Blue);
+   fillSpan(leds, 105, 105, CRGB::Blue); // light up the last led
+   */
 
-   /*for(int i = 0; i < 5;i=i+5){
+   /*
+   //light upp every 10 leds in alterating colors
+   for(int i = 0; i < 10;i=i+10){
     if (((i / 5) % 2) == 0){
-        fillSpan(leds, i, i+5, CRGB::Red);
+        fillSpan(leds, i, i+10, CRGB::Red);
     }else{
-        fillSpan(leds, i, i+5, CRGB::Blue);
+        fillSpan(leds, i, i+10, CRGB::Blue);
         }
-    }*/
+    }
+    */
+
 if (DEBUG_MODE) Serial.print("BillmanTest BiggestNumber");
 if (DEBUG_MODE) Serial.println(NUM_STRIPS*NUM_LEDS_PER_STRIP);
 if (DEBUG_MODE) Serial.println(biggestNumber);
