@@ -4,10 +4,10 @@
 #include "globals.h"
 
 
-void rainbowFlow(CRGB* leds, int& chaseLed ){
-    fill_rainbow(leds, NUM_LEDS, chaseLed);
-    chaseLed+=5;
-    if (chaseLed >= 255){
-        chaseLed = 0;
+void rainbowFlow(CRGB* leds, int& input_variable ){
+    fill_rainbow(leds, NUM_LEDS, input_variable);
+    input_variable+=5;
+    if (input_variable >= 255){
+        input_variable = 0;
     }
 }

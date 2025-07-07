@@ -10,7 +10,7 @@
 // Button
 volatile bool buttonPressed = false;
 uint8_t menuChoice = 1;
-#define MENU_MAX 3
+#define MENU_MAX 4
 
 #include "effects.h"
 #include "globals.h"
@@ -37,7 +37,7 @@ float bandMagnitudes[8] = {0}; // Stores magnitude for each band
 
 DFRobot_BMI160 bmi160;
 
-int chaseLed=0;
+int input_variable=0;
 bool blinker = true;
 
 const int8_t i2c_addr = 0x69;
@@ -278,9 +278,11 @@ void loop()
   // Add entropy to random number generator
   //random16_add_entropy( random());
   bmi_loop();
+  //hard code to billmanTest for debug
+  menuChoice = 4;
   switch (menuChoice){
     case 1:
-      rainbowFlow(leds,chaseLed);
+      rainbowFlow(leds,input_variable);
       if (DEBUG_MODE) Serial.println("Menu Option Rainbow Flow"); delay(1000);
     break;
     case 2:
@@ -292,17 +294,18 @@ void loop()
       if (DEBUG_MODE) Serial.println("Menu Option Power Test"); delay(1000);
     break;
     case 4:
-    
+      billmanTest(leds, input_variable);
+      if (DEBUG_MODE) Serial.println("Menu Option BillmanTest"); delay(1000);
     break;
     default:
 
     break;
   }
   
-  //chaserLed(leds, chaseLed, blinker);
+  //chaserLed(leds, input_variable, blinker);
   //powerTest(leds, blinker);
-  //rainbowFlow(leds,chaseLed);
-  //wobbleRing(leds, chaseLed);
+  //rainbowFlow(leds,input_variable);
+  //wobbleRing(leds, input_variable);
   //clockLed(leds);
   //print_mic_data();
   //fastFourierTransformAudio();
