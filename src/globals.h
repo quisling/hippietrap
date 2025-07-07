@@ -58,8 +58,8 @@
 #define START_DANGLE 78
 
 #define NUM_LEDS_TOP 40
-#define NUM_LEDS_TOP 38
-#define NUM_LEDS_TOP 30
+#define NUM_LEDS_RIM 38
+#define NUM_LEDS_DANGLE 30
 
 #endif
 

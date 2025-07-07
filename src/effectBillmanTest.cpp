@@ -11,7 +11,7 @@ void fillSpan(CRGB* leds, int startDiode, int stopDiode, CRGB color){
     }
 }
 
-void billmanTest(CRGB* leds, bool& input_variable ){
+void billmanTest(CRGB* leds, int& input_variable ){
     fill_solid(leds, NUM_LEDS, CRGB::Black);
     fillSpan(leds, START_TOP, START_RIM-1, CRGB::Red);
     fillSpan(leds, START_RIM, START_DANGLE-1, CRGB::Blue);
