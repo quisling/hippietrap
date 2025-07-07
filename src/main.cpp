@@ -15,8 +15,6 @@ uint8_t menuChoice = 1;
 #include "effects.h"
 #include "globals.h"
 
-#define DEBUG_MODE true
-
 #define BRIGHTNESS  100
 #define FRAMES_PER_SECOND 1000
 #define I2C_SDA 47
@@ -277,9 +275,9 @@ void loop()
   if (DEBUG_MODE) Serial.println("Hello hello");
   // Add entropy to random number generator
   //random16_add_entropy( random());
-  bmi_loop();
+  //bmi_loop();
   //hard code to billmanTest for debug
-  menuChoice = 1;
+  menuChoice = 4  ;
   switch (menuChoice){
     case 1:
       rainbowFlow(leds,input_variable);
@@ -290,7 +288,7 @@ void loop()
       if (DEBUG_MODE) Serial.println("Menu Option Fourier Transform"); delay(1000);
     break;
     case 3:
-      powerTest(leds, blinker);
+      setNumberLeds(leds, blinker);
       if (DEBUG_MODE) Serial.println("Menu Option Power Test"); delay(1000);
     break;
     case 4:
@@ -301,12 +299,7 @@ void loop()
 
     break;
   }
-  
-  //chaserLed(leds, input_variable, blinker);
-  //powerTest(leds, blinker);
-  //rainbowFlow(leds,input_variable);
-  //wobbleRing(leds, input_variable);
-  //clockLed(leds);
+
   //print_mic_data();
   //fastFourierTransformAudio();
   buttonHandler();

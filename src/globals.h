@@ -2,6 +2,8 @@
 
 #include "localSettings.h"
 
+#define DEBUG_MODE true
+
 #define DATA1   14
 #define DATA2   13
 #define DATA3   12
