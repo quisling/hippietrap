@@ -29,9 +29,10 @@ void debugBillman(CRGB* leds, int& input_variable ){
     if (DEBUG_MODE) Serial.println("BillmanTest Stop");
     */
   
-    fillSpan(leds, 46, 46, CRGB::Yellow); // this LED should be before DAGNLE
+    fillSpan(leds, 44, 44, CRGB::Purple); // this LED should be before DAGNLE
     fillSpan(leds, 76, 76, CRGB::Yellow); // this LED should be before DAGNLE
 
+    /*
    fillSpan(leds, 1, 5, CRGB::Green); //light up evry 10 led
    fillSpan(leds, 10, 10, CRGB::Green);
    fillSpan(leds, 20, 20, CRGB::Cyan);
