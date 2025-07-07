@@ -32,12 +32,17 @@
 
 #define CHIPSET     WS2815
 
-#if LARGE_PARASOL 
+#if LARGE_PARASOL // Jacob & Christian modell
 #define NUM_STRIPS 16
 #define NUM_LEDS_PER_STRIP 73
-#else
+#else //SMALL_PARASOL - Billman & Elin modell
 #define NUM_STRIPS 8
 #define NUM_LEDS_PER_STRIP 108
+
+#define START_TOP 0
+#define START_RIM 40
+#define START_DANGLE 78
+
 #endif
 
 #define NUM_LEDS NUM_LEDS_PER_STRIP * NUM_STRIPS
