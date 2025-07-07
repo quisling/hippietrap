@@ -6,11 +6,10 @@
 
 void powerTest(CRGB* leds, bool& blinker ){
   if (blinker){
-    fill_solid(leds, NUM_LEDS, CRGB::Red);
-    blinker = false;
+    fill_solid(leds, NUM_LEDS_PER_STRIP, CRGB::Green);
+    //blinker = false;
   }else{
     fill_solid(leds, NUM_LEDS, CRGB::Black);
     blinker = true;
   }
-
 }
