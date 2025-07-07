@@ -1,1 +1,4 @@
 If you make a new effect (.cpp) you need to name a function/void the the same effect, the file/folder will not suffice
+
+
+StartTop är satt till 0, men för att adressera diod 1 måste adressen 

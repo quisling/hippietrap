@@ -50,20 +50,20 @@ void BMI_setup(){
   //Wire.setPins( I2C_SDA,  I2C_SCL);
   int rslt = bmi160.I2cInit(I2C_ADDR);
   if (rslt != BMI160_OK) {
-    Serial.print("BMI160 init failed with: ");
-    Serial.println(rslt);
+    if (DEBUG_MODE)  Serial.print("BMI160 init failed with: ");
+    if (DEBUG_MODE)  Serial.println(rslt);
     while (1) {
     }
   }
 
   //init the hardware bmin160  
   if (bmi160.softReset() != BMI160_OK){
-    while(1) Serial.println("reset false");
+    while(1) if (DEBUG_MODE)  Serial.println("reset false");
   }
   
   //set and init the bmi160 i2c address
   if (bmi160.I2cInit(I2C_ADDR) != BMI160_OK){
-    while(1) Serial.println("init false");
+    while(1) if (DEBUG_MODE)  Serial.println("init false");
   }
 }
 
@@ -92,8 +92,9 @@ void i2c_mic_setup(){
 
       // Initialize FFT
   esp_err_t ret = dsps_fft2r_init_fc32(NULL, FFT_SIZE);
-  if (ret != ESP_OK) Serial.println("FFT init failed");
-
+  if (DEBUG_MODE) {
+    if (ret != ESP_OK) Serial.println("FFT init failed");
+  }
 }
 
 void print_mic_data(){
@@ -104,7 +105,7 @@ void print_mic_data(){
   // dump the samples out to the serial channel.
   for (int i = 0; i < samples_read; i++)
   {
-    Serial.printf("%ld\n", fft_input[i]);
+    if (DEBUG_MODE)  Serial.printf("%ld\n", fft_input[i]);
   }
 }
 
@@ -230,7 +231,7 @@ void buttonHandler(){
     if (setBrightness) return;
     menuChoice++;
     if (menuChoice > MENU_MAX) menuChoice = 1;
-    Serial.println(brightness);
+    if (DEBUG_MODE)  Serial.println(brightness);
   }
 }
 
@@ -243,21 +244,24 @@ void bmi_loop(){
     //get both accel and gyro data from bmi160
     //parameter accelGyro is the pointer to store the data
     rslt = bmi160.getAccelGyroData(accelGyro);
-    if(rslt == 0){
-      for(i=0;i<6;i++){
-        if (i<3){
-          //the first three are gyro data
-          Serial.print(accelGyro[i]*3.14/180.0);Serial.print("\t");
-        }else{
-          //the following three data are accel data
-          Serial.print(accelGyro[i]/16384.0);Serial.print("\t");
+    if (DEBUG_MODE) {
+      if(rslt == 0){
+        for(i=0;i<6;i++){
+          if (i<3){
+            //the first three are gyro data
+            Serial.print(accelGyro[i]*3.14/180.0);Serial.print("\t");
+          }else{
+            //the following three data are accel data
+            Serial.print(accelGyro[i]/16384.0);Serial.print("\t");
+          }
         }
+        Serial.println();
+      }else{
+        Serial.println("err");
       }
-      Serial.println();
-    }else{
-      Serial.println("err");
+      delay(100);
     }
-    delay(100);
+    
     
     //only read accel data from bmi160
     int16_t onlyAccel[3]={0};
@@ -303,9 +307,7 @@ void loop()
 
     break;
   }
-  iterating_variable++; 
-  //adds 1 every loop. Use for effects that move the active "pixel" etc.
-  if(iterating_variable>NUM_LEDS_PER_STRIP) iterating_variable =0;
+
   //print_mic_data();
   //fastFourierTransformAudio();
   buttonHandler();
@@ -332,15 +334,15 @@ void loop()
     for(i=0;i<6;i++){
       if (i<3){
         //the first three are gyro data
-        Serial.print(accelGyro[i]*3.14/180.0);Serial.print("\t");
+        if (DEBUG_MODE)  Serial.print(accelGyro[i]*3.14/180.0);Serial.print("\t");
       }else{
         //the following three data are accel data
-        Serial.print(accelGyro[i]/16384.0);Serial.print("\t");
+        if (DEBUG_MODE)  Serial.print(accelGyro[i]/16384.0);Serial.print("\t");
       }
     }
-    Serial.println();
+    if (DEBUG_MODE)  Serial.println();
   }else{
-    Serial.println("err");
+    if (DEBUG_MODE)  Serial.println("err");
   }
   delay(100);*/
   /*

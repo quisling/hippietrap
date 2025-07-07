@@ -37,11 +37,7 @@
 
 #define START_TOP 0
 #define START_RIM 44
-#define START_DANGLE 77
-
-#define NUM_LEDS_TOP (START_RIM -1)
-#define NUM_LEDS_RIM (NUM_LEDS_TOP - NUM_LEDS_TOP -1)
-#define NUM_LEDS_DANGLE (NUM_LEDS_TOP + NUM_LEDS_RIM)
+#define START_DANGLE 77     //only applicable for SMALL_PARASOL
 
 
 #if LARGE_PARASOL // Jacob & Christian modell
@@ -49,15 +45,21 @@
 #define NUM_STRIPS 16
 #define NUM_LEDS_PER_STRIP 73
 
-#else //SMALL_PARASOL - Billman & Elin modell
-// Change "#define LARGE_PARASOL true" in localSettings.h to false to enablo/swap
+    #else //SMALL_PARASOL - Billman & Elin modell
+    // Change "#define LARGE_PARASOL true" in localSettings.h to false to enablo/swap
 
-#define BUTTON_PIN_2_MID 4
-#define BUTTON_PIN_3_TOP 5
+    #define BUTTON_PIN_2_MID 4
+    #define BUTTON_PIN_3_TOP 5
 
-#define NUM_STRIPS 8
-#define NUM_LEDS_PER_STRIP 105
+    #define NUM_STRIPS 8
+    #define NUM_LEDS_PER_STRIP 105
 
-#endif
+    #endif
 
-#define NUM_LEDS NUM_LEDS_PER_STRIP * NUM_STRIPS
+#define NUM_LEDS_TOP (START_RIM -1)
+#define NUM_LEDS_RIM (NUM_LEDS_TOP - NUM_LEDS_TOP -1)
+#define NUM_LEDS_DANGLE (NUM_LEDS_TOP + NUM_LEDS_RIM)
+
+#define LAST_LED_PER_STRIP (NUM_LEDS_PER_STRIP -1)
+
+#define NUM_LEDS (NUM_LEDS_PER_STRIP * NUM_STRIPS)
