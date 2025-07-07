@@ -1,5 +1,4 @@
 #include <FastLED.h>
-
 #include "effects.h"
 #include "globals.h"
 
@@ -16,7 +15,7 @@ void fillSpan(CRGB* leds, int startDiode, int stopDiode, CRGB color){
     }
 }
 
-void billmanTest(CRGB* leds, int& input_variable ){
+void debugBillman(CRGB* leds, int& input_variable ){
     
     if (DEBUG_MODE) Serial.println("BillmanTest Start");
     fill_solid(leds, NUM_LEDS, CRGB::Black);
@@ -30,7 +29,7 @@ void billmanTest(CRGB* leds, int& input_variable ){
     if (DEBUG_MODE) Serial.println("BillmanTest Stop");
     */
   
-    fillSpan(leds, 76, 76, CRGB::Yellow); // this LED should be before DAGNLE
+    fillSpan(leds, 46, 46, CRGB::Yellow); // this LED should be before DAGNLE
     fillSpan(leds, 76, 76, CRGB::Yellow); // this LED should be before DAGNLE
 
    fillSpan(leds, 1, 5, CRGB::Green); //light up evry 10 led
@@ -47,6 +46,7 @@ void billmanTest(CRGB* leds, int& input_variable ){
    fillSpan(leds, 100, 100, CRGB::Cyan);
    
    fillSpan(leds, 105, 105, CRGB::Blue);
+
    /*for(int i = 0; i < 5;i=i+5){
     if (((i / 5) % 2) == 0){
         fillSpan(leds, i, i+5, CRGB::Red);

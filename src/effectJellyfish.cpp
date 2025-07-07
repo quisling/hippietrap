@@ -1,4 +1,3 @@
-/*
 #include <FastLED.h>
 #include "effects.h"
 #include "globals.h"
@@ -7,22 +6,21 @@
 CRGB dimPurple = CRGB(64, 0, 64);      // Dim purple (low brightness)
 CRGB brightPurple = CRGB(180, 0, 255); // Bright purple (high brightness)
 
-void Jellyfish() {
-    // Animate a single bright purple LED moving along the strip
-
-    // Loop through each LED position
-    for (int i = 0; i < NUM_LEDS_TOP; i++) {
-        // Step 1: Set all LEDs to dim purple
-        fill_solid(LEDS_TOP, NUM_LEDS_TOP, dimPurple);
-
-        // Step 2: Set the current LED to bright purple
-        LEDS_TOP[i] = brightPurple;
-
-        // Step 3: Show the updated colors
-        FastLED.show();
-
-        // Step 4: Wait a bit before moving to the next LED
-        delay(50); // Adjust speed of animation here
+void fillSpan2(CRGB* leds, int startDiode, int stopDiode, CRGB color){
+    
+    for(int i = 0; i < NUM_STRIPS; i++){
+      for(uint16_t j = (i*NUM_LEDS_PER_STRIP) + startDiode-1; j <= (i*NUM_LEDS_PER_STRIP)+stopDiode-1; j++){
+        leds[j] = color;
+      }
+    if (DEBUG_MODE) Serial.println(i);
     }
 }
-    */
+
+void jellyFish(CRGB* leds, int& iterating_variable){
+    // Animate a single bright purple LED moving along the strip
+    // Loop through each LED position
+    fillSpan2(leds,START_TOP+1, START_RIM, dimPurple);
+    fillSpan2(leds, iterating_variable, iterating_variable, brightPurple);
+    if (DEBUG_MODE) Serial.println("In Jellyfish, iterating variable: ");
+    if (DEBUG_MODE) Serial.println(iterating_variable);
+}

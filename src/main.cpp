@@ -10,7 +10,7 @@
 // Button
 volatile bool buttonPressed = false;
 uint8_t menuChoice = 1;
-#define MENU_MAX 4
+
 
 #include "effects.h"
 #include "globals.h"
@@ -35,7 +35,7 @@ float bandMagnitudes[8] = {0}; // Stores magnitude for each band
 
 DFRobot_BMI160 bmi160;
 
-int input_variable=0;
+int iterating_variable=0;
 bool blinker = true;
 
 const int8_t i2c_addr = 0x69;
@@ -280,7 +280,7 @@ void loop()
   if (HARDCODED_MENU > 0 )menuChoice = HARDCODED_MENU;
   switch (menuChoice){
     case 1:
-      rainbowFlow(leds,input_variable);
+      rainbowFlow(leds,iterating_variable);
       if (DEBUG_MODE) Serial.println("Menu Option Rainbow Flow"); delay(1000);
     break;
     case 2:
@@ -292,14 +292,20 @@ void loop()
       if (DEBUG_MODE) Serial.println("Menu Option Power Test"); delay(1000);
     break;
     case 4:
-      billmanTest(leds, input_variable);
+      debugBillman(leds, iterating_variable);
       if (DEBUG_MODE) Serial.println("Menu Option BillmanTest"); delay(1000);
+    break;
+    case 5:
+      jellyFish(leds, iterating_variable);
+      if (DEBUG_MODE) Serial.println("Menu Option debugBillman"); delay(1000);
     break;
     default:
 
     break;
   }
-
+  iterating_variable++; 
+  //adds 1 every loop. Use for effects that move the active "pixel" etc.
+  if(iterating_variable>NUM_LEDS_PER_STRIP) iterating_variable =0;
   //print_mic_data();
   //fastFourierTransformAudio();
   buttonHandler();
