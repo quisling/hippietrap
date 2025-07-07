@@ -51,15 +51,15 @@
 #define BUTTON_PIN_3_TOP 5
 
 #define NUM_STRIPS 8
-#define NUM_LEDS_PER_STRIP 108
+#define NUM_LEDS_PER_STRIP 105
 
 #define START_TOP 0
-#define START_RIM 40
-#define START_DANGLE 78
+#define START_RIM 44
+#define START_DANGLE 77
 
-#define NUM_LEDS_TOP 40
-#define NUM_LEDS_RIM 38
-#define NUM_LEDS_DANGLE 30
+#define NUM_LEDS_TOP (START_RIM -1)
+#define NUM_LEDS_RIM (NUM_LEDS_TOP - NUM_LEDS_TOP -1)
+#define NUM_LEDS_DANGLE (NUM_LEDS_TOP + NUM_LEDS_RIM)
 
 #endif
 

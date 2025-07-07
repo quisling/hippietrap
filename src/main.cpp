@@ -207,7 +207,7 @@ void setup() {
   pinMode(BUTTON_PIN_1, INPUT_PULLUP); // Use internal pull-up resistor
   attachInterrupt(BUTTON_PIN_1, handleButton, FALLING);
 
-  BMI_setup();
+  //BMI_setup();
 }
 void buttonHandler(){
   bool setBrightness = false;
