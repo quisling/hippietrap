@@ -204,8 +204,8 @@ void setup() {
 
   i2c_mic_setup();
 
-  pinMode(BUTTON_PIN, INPUT_PULLUP); // Use internal pull-up resistor
-  attachInterrupt(BUTTON_PIN, handleButton, FALLING);
+  pinMode(BUTTON_PIN_1, INPUT_PULLUP); // Use internal pull-up resistor
+  attachInterrupt(BUTTON_PIN_1, handleButton, FALLING);
 
   BMI_setup();
 }
