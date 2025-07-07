@@ -17,7 +17,7 @@ uint8_t menuChoice = 1;
 
 #define DEBUG_MODE true
 
-#define BRIGHTNESS  150
+#define BRIGHTNESS  100
 #define FRAMES_PER_SECOND 1000
 #define I2C_SDA 47
 #define I2C_SCL 21
@@ -279,7 +279,7 @@ void loop()
   //random16_add_entropy( random());
   bmi_loop();
   //hard code to billmanTest for debug
-  menuChoice = 4;
+  menuChoice = 1;
   switch (menuChoice){
     case 1:
       rainbowFlow(leds,input_variable);

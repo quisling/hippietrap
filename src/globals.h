@@ -1,5 +1,6 @@
 #pragma once
-#define LARGE_PARASOL false
+
+#include "localSettings.h"
 
 #define DATA1   14
 #define DATA2   13
