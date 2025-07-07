@@ -4,7 +4,7 @@
 #include "globals.h"
 
 
-void chaserLed(CRGB* leds, int& chaseLed,bool& blinker ){
+void chaserLed(CRGB* leds, int& input_variable,bool& blinker ){
     /*if (blinker){
       fill_solid(leds, NUM_LEDS, CRGB::Red); // Turn all off
       blinker = false;
@@ -13,14 +13,14 @@ void chaserLed(CRGB* leds, int& chaseLed,bool& blinker ){
       blinker = true;
     }*/
     fill_solid(leds, NUM_LEDS, CRGB::Black);
-    leds[chaseLed] = CRGB::Purple;
-    leds[((chaseLed+1)%NUM_LEDS)] = CRGB::Blue;
-    leds[((chaseLed+2)%NUM_LEDS)] = CRGB::White;
-    leds[((chaseLed+3)%NUM_LEDS)] = CRGB::Orange;
-    leds[((chaseLed+4)%NUM_LEDS)] = CRGB::Red;
-    chaseLed++;
-    if (chaseLed > NUM_LEDS)
+    leds[input_variable] = CRGB::Purple;
+    leds[((input_variable+1)%NUM_LEDS)] = CRGB::Blue;
+    leds[((input_variable+2)%NUM_LEDS)] = CRGB::White;
+    leds[((input_variable+3)%NUM_LEDS)] = CRGB::Orange;
+    leds[((input_variable+4)%NUM_LEDS)] = CRGB::Red;
+    input_variable++;
+    if (input_variable > NUM_LEDS)
     {
-      chaseLed = 0;
+      input_variable = 0;
     }
 }
