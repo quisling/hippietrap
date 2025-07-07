@@ -277,7 +277,7 @@ void loop()
   //random16_add_entropy( random());
   //bmi_loop();
   //hard code to billmanTest for debug
-  menuChoice = 4  ;
+  if (HARDCODED_MENU > 0 )menuChoice = HARDCODED_MENU;
   switch (menuChoice){
     case 1:
       rainbowFlow(leds,input_variable);
