@@ -2,12 +2,8 @@
 
 #include "localSettings.h"
 
-<<<<<<< HEAD
 #define DEBUG_MODE true
-
-=======
 // Pins for LEDS for SMALL_PARASOL with 8 strips
->>>>>>> 961e434 (Addede segments in Global)
 #define DATA1   14
 #define DATA2   13
 #define DATA3   12
