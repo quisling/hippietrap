@@ -35,9 +35,10 @@
 
 #define CHIPSET     WS2815
 
+//numbers only applicable for SMALL_PARASOL
 #define START_TOP 0
-#define START_RIM 44
-#define START_DANGLE 77     //only applicable for SMALL_PARASOL
+#define START_RIM 45
+#define START_DANGLE 77     
 
 
 #if LARGE_PARASOL // Jacob & Christian modell
