@@ -7,28 +7,19 @@ CRGB dimPurple = CRGB(64, 0, 64);      // Dim purple (low brightness)
 CRGB brightPurple = CRGB(180, 0, 255); // Bright purple (high brightness)
 CRGB dimBlue = CRGB(0, 0, 64);  // Dim blue (low brightness)
 
-void fillSpan2(CRGB* leds, int startDiode, int stopDiode, CRGB color){
-    
-    for(int i = 0; i < NUM_STRIPS; i++){
-      for(uint16_t j = (i*NUM_LEDS_PER_STRIP) + startDiode; j <= (i*NUM_LEDS_PER_STRIP)+stopDiode; j++){
-        leds[j] = color;
-      }
-    if (DEBUG_MODE) Serial.println(i);
-    }
-}
 
 void jellyFish(CRGB* leds, int& iterating_variable){
     // Reset
-    fillSpan2(leds,START_TOP, LAST_LED_PER_STRIP, CRGB :: Black);
+    fillSpan(leds,START_TOP, LAST_LED_PER_STRIP, CRGB :: Black);
     
-    fillSpan2(leds,START_TOP, START_RIM, dimPurple);
-    fillSpan2(leds,START_RIM, START_DANGLE, dimBlue);
+    fillSpan(leds,START_TOP, START_RIM, dimPurple);
+    fillSpan(leds,START_RIM, START_DANGLE, dimBlue);
 
     // Loop through each LED position
-    fillSpan2(leds, iterating_variable, iterating_variable, brightPurple);
+    fillSpan(leds, iterating_variable, iterating_variable, brightPurple);
 
     if (iterating_variable == START_RIM) {
-        fillSpan2 (leds, START_RIM+1, START_DANGLE, brightPurple);
+        fillSpan (leds, START_RIM+1, START_DANGLE, brightPurple);
         iterating_variable = START_DANGLE;
         }
 
@@ -36,7 +27,9 @@ void jellyFish(CRGB* leds, int& iterating_variable){
     if(iterating_variable > LAST_LED_PER_STRIP) iterating_variable = 0;
 
 
-    if (DEBUG_MODE) Serial.println("In Jellyfish, iterating variable: ");
-    if (DEBUG_MODE) Serial.println(iterating_variable);
+    #ifdef DEBUG_MODE
+      Serial.println("In Jellyfish, iterating variable: ");
+      Serial.println(iterating_variable);
+    #endif
 
 }

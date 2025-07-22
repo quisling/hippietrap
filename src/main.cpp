@@ -15,7 +15,7 @@ uint8_t menuChoice = 1;
 #include "effects.h"
 #include "globals.h"
 
-#define BRIGHTNESS  100
+#define BRIGHTNESS  30
 #define FRAMES_PER_SECOND 1000
 #define I2C_SDA 47
 #define I2C_SCL 21
@@ -49,21 +49,27 @@ void BMI_setup(){
   Wire.begin(I2C_SDA, I2C_SCL); // SDA = GPIO47, SCL = GPIO21
   //Wire.setPins( I2C_SDA,  I2C_SCL);
   int rslt = bmi160.I2cInit(I2C_ADDR);
-  if (rslt != BMI160_OK) {
-    if (DEBUG_MODE)  Serial.print("BMI160 init failed with: ");
-    if (DEBUG_MODE)  Serial.println(rslt);
+  if (rslt != BMI160_OK && DEBUG_MODE) {
+    Serial.print("BMI160 init failed with: ");
+    Serial.println(rslt);
     while (1) {
     }
   }
 
   //init the hardware bmin160  
   if (bmi160.softReset() != BMI160_OK){
-    while(1) if (DEBUG_MODE)  Serial.println("reset false");
+    while(DEBUG_MODE)
+    {
+      Serial.println("reset false");
+    }
   }
   
   //set and init the bmi160 i2c address
   if (bmi160.I2cInit(I2C_ADDR) != BMI160_OK){
-    while(1) if (DEBUG_MODE)  Serial.println("init false");
+    while(DEBUG_MODE) 
+    {
+      Serial.println("init false");
+    }
   }
 }
 
@@ -92,9 +98,9 @@ void i2c_mic_setup(){
 
       // Initialize FFT
   esp_err_t ret = dsps_fft2r_init_fc32(NULL, FFT_SIZE);
-  if (DEBUG_MODE) {
+  #ifdef DEBUG_MODE
     if (ret != ESP_OK) Serial.println("FFT init failed");
-  }
+  #endif
 }
 
 void print_mic_data(){
@@ -105,7 +111,9 @@ void print_mic_data(){
   // dump the samples out to the serial channel.
   for (int i = 0; i < samples_read; i++)
   {
-    if (DEBUG_MODE)  Serial.printf("%ld\n", fft_input[i]);
+    #ifdef DEBUG_MODE 
+      Serial.printf("%ld\n", fft_input[i]);
+    #endif
   }
 }
 
@@ -155,18 +163,18 @@ void fastFourierTransformAudio(){
       leds[pos] = (j < ledLevel) ? CRGB(CHSV(i * 40, 255, 255)) : CRGB::Black;
 
     }
-    if (DEBUG_MODE){
+    #ifdef DEBUG_MODE
       Serial.print(ledLevel);
       Serial.print(" ");
-    }
+    #endif
   }
-  if (DEBUG_MODE) {
+  #ifdef DEBUG_MODE
     for (int i = 0; i < numBands; i++) {
       Serial.print(bandMagnitudes[i]);
       Serial.print(" "); // Add a space between numbers
     }
     Serial.println(); // Newline after printing
-  }
+  #endif
 
   // 8. Add decay effect for smooth transitions
   fadeToBlackBy(leds, NUM_LEDS, 50);
@@ -197,9 +205,9 @@ void fastLedSetup(){
 
 void setup() {
   delay(3000); // sanity delay
-  if (DEBUG_MODE){
+  /*#ifdef DEBUG_MODE){
     Serial.begin(115200); // Start serial at 115200 baud
-  }
+  }*/
   fastLedSetup();
   FastLED.setBrightness( BRIGHTNESS );
 
@@ -213,7 +221,9 @@ void setup() {
 void buttonHandler(){
   bool setBrightness = false;
   if (buttonPressed) {
-    if (DEBUG_MODE) Serial.println("Button was pressed!");
+    #ifdef DEBUG_MODE
+      Serial.println("Button was pressed!");
+    #endif
     buttonPressed = false;      // Reset flag
     menuIndicator(leds,menuChoice);
     FastLED.show();
@@ -223,7 +233,9 @@ void buttonHandler(){
       buttonPressed = false;
       brightness+=100;
       if (brightness >=250) brightness = 10;
-      if (DEBUG_MODE) Serial.print("Brightness: "); Serial.println(brightness);
+      #ifdef DEBUG_MODE
+        Serial.print("Brightness: "); Serial.println(brightness);
+      #endif
       FastLED.setBrightness( brightness);
       FastLED.show();
       delay(1000);
@@ -231,7 +243,9 @@ void buttonHandler(){
     if (setBrightness) return;
     menuChoice++;
     if (menuChoice > MENU_MAX) menuChoice = 1;
-    if (DEBUG_MODE)  Serial.println(brightness);
+    #ifdef DEBUG_MODE
+      Serial.println(brightness);
+    #endif
   }
 }
 
@@ -244,7 +258,7 @@ void bmi_loop(){
     //get both accel and gyro data from bmi160
     //parameter accelGyro is the pointer to store the data
     rslt = bmi160.getAccelGyroData(accelGyro);
-    if (DEBUG_MODE) {
+    #ifdef DEBUG_MODE
       if(rslt == 0){
         for(i=0;i<6;i++){
           if (i<3){
@@ -260,7 +274,7 @@ void bmi_loop(){
         Serial.println("err");
       }
       delay(100);
-    }
+    #endif
     
     
     //only read accel data from bmi160
@@ -276,7 +290,9 @@ void bmi_loop(){
 
 void loop()
 {
-  if (DEBUG_MODE) Serial.println("Hello hello");
+  #ifdef DEBUG_MODE
+    Serial.println("Hello hello");
+  #endif
   // Add entropy to random number generator
   //random16_add_entropy( random());
   //bmi_loop();
@@ -285,24 +301,45 @@ void loop()
   switch (menuChoice){
     case 1:
       rainbowFlow(leds,iterating_variable);
-      if (DEBUG_MODE) Serial.println("Menu Option Rainbow Flow"); delay(1000);
+      #ifdef DEBUG_MODE
+      Serial.println("Menu Option Rainbow Flow"); 
+      //delay(1000);
+      #endif
     break;
     case 2:
       fastFourierTransformAudio();
-      if (DEBUG_MODE) Serial.println("Menu Option Fourier Transform"); delay(1000);
+      #ifdef DEBUG_MODE 
+      Serial.println("Menu Option Fourier Transform"); 
+      delay(1000);
+      #endif
     break;
     case 3:
       setNumberLeds(leds, blinker);
-      if (DEBUG_MODE) Serial.println("Menu Option Power Test"); delay(1000);
+      #ifdef DEBUG_MODE 
+      Serial.println("Menu Option Power Test"); // Dont put multiple statements on the same line!
+      delay(1000);
+      #endif
     break;
     case 4:
       debugBillman(leds, iterating_variable);
-      if (DEBUG_MODE) Serial.println("Menu Option BillmanTest"); delay(1000);
+      #ifdef DEBUG_MODE 
+      Serial.println("Menu Option BillmanTest"); 
+      //delay(1000);
+      #endif
     break;
     case 5:
       jellyFish(leds, iterating_variable);
-      if (DEBUG_MODE) Serial.println("Menu Option debugBillman"); delay(1000);
+      #ifdef DEBUG_MODE
+      Serial.println("Menu Option debugBillman"); 
+      delay(1000);
+      #endif
     break;
+    case 6:
+      explosionEffect(leds, iterating_variable);
+      #ifdef DEBUG_MODE
+      Serial.println("Menu Option explosionEffect"); 
+      delay(1000);
+      #endif
     default:
 
     break;
@@ -334,15 +371,15 @@ void loop()
     for(i=0;i<6;i++){
       if (i<3){
         //the first three are gyro data
-        if (DEBUG_MODE)  Serial.print(accelGyro[i]*3.14/180.0);Serial.print("\t");
+        #ifdef DEBUG_MODE)  Serial.print(accelGyro[i]*3.14/180.0);Serial.print("\t");
       }else{
         //the following three data are accel data
-        if (DEBUG_MODE)  Serial.print(accelGyro[i]/16384.0);Serial.print("\t");
+        #ifdef DEBUG_MODE)  Serial.print(accelGyro[i]/16384.0);Serial.print("\t");
       }
     }
-    if (DEBUG_MODE)  Serial.println();
+    #ifdef DEBUG_MODE)  Serial.println();
   }else{
-    if (DEBUG_MODE)  Serial.println("err");
+    #ifdef DEBUG_MODE)  Serial.println("err");
   }
   delay(100);*/
   /*

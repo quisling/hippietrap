@@ -4,17 +4,6 @@
 
 int biggestNumber;
 
-void fillSpan(CRGB* leds, int startDiode, int stopDiode, CRGB color){
-    
-    for(int i = 0; i < NUM_STRIPS; i++){
-      for(uint16_t j = (i*NUM_LEDS_PER_STRIP) + startDiode-1; j <= (i*NUM_LEDS_PER_STRIP)+stopDiode-1; j++){
-        leds[j] = color;
-        if (j > biggestNumber) biggestNumber = j;
-      }
-    if (DEBUG_MODE) Serial.println(i);
-    }
-}
-
 void debugBillman(CRGB* leds, int& input_variable ){
     
     if (DEBUG_MODE) Serial.println("BillmanTest Start");
