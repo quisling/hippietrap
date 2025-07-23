@@ -193,7 +193,7 @@ void fastLedSetup(){
       FastLED.addLeds<CHIPSET, DATA6>(leds, 5 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
       FastLED.addLeds<CHIPSET, DATA7>(leds, 6 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
       FastLED.addLeds<CHIPSET, DATA8>(leds, 7 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-      if (LARGE_PARASOL){
+      #ifdef LARGE_PARASOL
         FastLED.addLeds<CHIPSET, DATA9>(leds, 8 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
         FastLED.addLeds<CHIPSET, DATA10>(leds, 9 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
         FastLED.addLeds<CHIPSET, DATA11>(leds, 10 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
@@ -202,7 +202,7 @@ void fastLedSetup(){
         FastLED.addLeds<CHIPSET, DATA14>(leds, 13 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
         FastLED.addLeds<CHIPSET, DATA15>(leds, 14 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
         FastLED.addLeds<CHIPSET, DATA16>(leds, 15 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-      }
+      #endif
 }
 
 void setup() {
