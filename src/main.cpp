@@ -193,7 +193,7 @@ void fastLedSetup(){
       FastLED.addLeds<CHIPSET, DATA6>(leds, 5 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
       FastLED.addLeds<CHIPSET, DATA7>(leds, 6 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
       FastLED.addLeds<CHIPSET, DATA8>(leds, 7 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-      #ifdef LARGE_PARASOL
+      #ifdef LARGE_PARASOL //IFDEF to allow SMALL_PARASOL to use these pins for additional buttons etc. 
         FastLED.addLeds<CHIPSET, DATA9>(leds, 8 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
         FastLED.addLeds<CHIPSET, DATA10>(leds, 9 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
         FastLED.addLeds<CHIPSET, DATA11>(leds, 10 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
