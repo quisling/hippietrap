@@ -8,7 +8,7 @@
 #include "dsps_wind.h"
 
 // Button
-volatile bool buttonPressed = false;
+volatile bool buttonPressed = true;
 uint8_t menuChoice = 1;
 
 
@@ -41,7 +41,9 @@ bool blinker = true;
 const int8_t i2c_addr = 0x69;
 
 void IRAM_ATTR handleButton() {
-  buttonPressed = true;         // Set flag when button is pressed
+  //fill_solid(leds, NUM_LEDS, CRGB::Green);
+  //FastLED.show();
+  buttonPressed = false;         // Set flag when button is pressed
 }
 
 void BMI_setup(){
@@ -181,25 +183,25 @@ void fastFourierTransformAudio(){
 }
 
 void fastLedSetup(){
-      // tell FastLED there's 60 NEOPIXEL leds on pin 10, starting at index 0 in the led array
-      FastLED.addLeds<NEOPIXEL, DATA1>(leds, 0, NUM_LEDS_PER_STRIP);
-      // tell FastLED there's 60 NEOPIXEL leds on pin 11, starting at index 60 in the led array
-      FastLED.addLeds<NEOPIXEL, DATA2>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-      FastLED.addLeds<NEOPIXEL, DATA3>(leds, 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-      FastLED.addLeds<NEOPIXEL, DATA4>(leds, 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-      FastLED.addLeds<NEOPIXEL, DATA5>(leds, 4 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-      FastLED.addLeds<NEOPIXEL, DATA6>(leds, 5 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-      FastLED.addLeds<NEOPIXEL, DATA7>(leds, 6 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-      FastLED.addLeds<NEOPIXEL, DATA8>(leds, 7 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+      // tell FastLED there's 60 CHIPSET leds on pin 10, starting at index 0 in the led array
+      FastLED.addLeds<CHIPSET, DATA1>(leds, 0, NUM_LEDS_PER_STRIP);
+      // tell FastLED there's 60 CHIPSET leds on pin 11, starting at index 60 in the led array
+      FastLED.addLeds<CHIPSET, DATA2>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+      FastLED.addLeds<CHIPSET, DATA3>(leds, 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+      FastLED.addLeds<CHIPSET, DATA4>(leds, 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+      FastLED.addLeds<CHIPSET, DATA5>(leds, 4 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+      FastLED.addLeds<CHIPSET, DATA6>(leds, 5 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+      FastLED.addLeds<CHIPSET, DATA7>(leds, 6 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+      FastLED.addLeds<CHIPSET, DATA8>(leds, 7 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
       if (LARGE_PARASOL){
-        FastLED.addLeds<NEOPIXEL, DATA9>(leds, 8 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-        FastLED.addLeds<NEOPIXEL, DATA10>(leds, 9 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-        FastLED.addLeds<NEOPIXEL, DATA11>(leds, 10 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-        FastLED.addLeds<NEOPIXEL, DATA12>(leds, 11 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-        FastLED.addLeds<NEOPIXEL, DATA13>(leds, 12 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-        FastLED.addLeds<NEOPIXEL, DATA14>(leds, 13 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-        FastLED.addLeds<NEOPIXEL, DATA15>(leds, 14 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-        FastLED.addLeds<NEOPIXEL, DATA16>(leds, 15 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+        FastLED.addLeds<CHIPSET, DATA9>(leds, 8 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+        FastLED.addLeds<CHIPSET, DATA10>(leds, 9 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+        FastLED.addLeds<CHIPSET, DATA11>(leds, 10 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+        FastLED.addLeds<CHIPSET, DATA12>(leds, 11 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+        FastLED.addLeds<CHIPSET, DATA13>(leds, 12 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+        FastLED.addLeds<CHIPSET, DATA14>(leds, 13 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+        FastLED.addLeds<CHIPSET, DATA15>(leds, 14 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+        FastLED.addLeds<CHIPSET, DATA16>(leds, 15 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
       }
 }
 
@@ -213,12 +215,23 @@ void setup() {
 
   i2c_mic_setup();
 
-  pinMode(BUTTON_PIN_1, INPUT_PULLUP); // Use internal pull-up resistor
-  attachInterrupt(BUTTON_PIN_1, handleButton, FALLING);
+  pinMode(BUTTON_PIN_1, INPUT_PULLDOWN); // Use internal pull-up resistor
+  attachInterrupt(BUTTON_PIN_1, handleButton, RISING);
 
   //BMI_setup();
 }
 void buttonHandler(){
+ 
+  if(!buttonPressed)
+
+  {
+  menuChoice = 99;
+  iterating_variable = 0;
+  buttonPressed = true;
+  }
+
+
+  return;
   bool setBrightness = false;
   if (buttonPressed) {
     #ifdef DEBUG_MODE
@@ -288,8 +301,24 @@ void bmi_loop(){
   }
 }
 
+void blinkLed(int blinks)
+{
+  for ( int i = 0; i < blinks; i++)
+  {
+    leds[60] = CRGB::HotPink;
+    FastLED.show();
+    delay(250);
+    leds[60] = CRGB::Black;
+    FastLED.show();
+  }
+
+  if(menuChoice == 0)
+  { blinkLed(10); }
+}
+
 void loop()
 {
+
   #ifdef DEBUG_MODE
     Serial.println("Hello hello");
   #endif
@@ -297,7 +326,13 @@ void loop()
   //random16_add_entropy( random());
   //bmi_loop();
   //hard code to billmanTest for debug
+
+  
+
+  int width = 10;
   if (HARDCODED_MENU > 0 )menuChoice = HARDCODED_MENU;
+  //blinkLed(menuChoice);
+
   switch (menuChoice){
     case 1:
       rainbowFlow(leds,iterating_variable);
@@ -307,48 +342,68 @@ void loop()
       #endif
     break;
     case 2:
+      ringsOutward(leds);
+      
+      #ifdef DEBUG_MODE 
+      Serial.println("Menu Rings Outward"); 
+      //delay(1000);
+      #endif
+    break;
+
+    case 3:
+    break;
+
+    case 4:
       fastFourierTransformAudio();
       #ifdef DEBUG_MODE 
       Serial.println("Menu Option Fourier Transform"); 
       delay(1000);
       #endif
     break;
-    case 3:
+
+    case 5:
       setNumberLeds(leds, blinker);
       #ifdef DEBUG_MODE 
       Serial.println("Menu Option Power Test"); // Dont put multiple statements on the same line!
       delay(1000);
       #endif
     break;
-    case 4:
+
+    case 6:
       debugBillman(leds, iterating_variable);
       #ifdef DEBUG_MODE 
       Serial.println("Menu Option BillmanTest"); 
       //delay(1000);
       #endif
     break;
-    case 5:
+
+    case 7:
       jellyFish(leds, iterating_variable);
       #ifdef DEBUG_MODE
       Serial.println("Menu Option debugBillman"); 
       delay(1000);
       #endif
     break;
-    case 6:
+
+    case 99:
       explosionEffect(leds, iterating_variable);
       #ifdef DEBUG_MODE
-      Serial.println("Menu Option explosionEffect"); 
-      delay(1000);
+        Serial.println("Menu Option explosionEffect"); 
+        //delay(1000);
       #endif
-    default:
+      if(iterating_variable>2) menuChoice = 1;
+    break;
 
+    default:
+    fill_solid(leds,NUM_LEDS,CRGB::HotPink);
+    FastLED.show();
     break;
   }
 
   //print_mic_data();
   //fastFourierTransformAudio();
   buttonHandler();
-  FastLED.show(); // display this frame
+  //FastLED.show(); // display this frame
   //FastLED.delay(1000 / FRAMES_PER_SECOND);
   /*frame++;
   brightness = frame%100;
@@ -357,6 +412,8 @@ void loop()
   }
   FastLED.setBrightness( brightness );
   */
+
+
 }
 
 /*void BMI_loop(){  

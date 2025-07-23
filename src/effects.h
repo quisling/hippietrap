@@ -8,6 +8,8 @@ void clockLed(CRGB* leds);
 void debugBillman(CRGB* leds, int& iterating_variable);
 void jellyFish(CRGB* leds, int& iterating_variable);
 void explosionEffect(CRGB* leds, int& iterating_variable);
+bool ringsOutward(CRGB* leds);
 void fillSpan(CRGB* leds, int startDiode, int stopDiode, CRGB color);
+
 
 //CRGB - Typen, att det är en karta. Leds - informationene över vilka led som är vilka i matrisn, och vilken färg de har
