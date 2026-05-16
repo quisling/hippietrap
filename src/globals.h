@@ -2,6 +2,8 @@
 
 #include "localSettings.h"
 
+#define DEBUG_MODE false
+
 #define MENU_MAX 5
 
 // Pins for LEDS for SMALL_PARASOL with 8 strips, and base for LARGE_PARASOL
