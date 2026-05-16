@@ -19,7 +19,7 @@ void chaserLed(CRGB* leds, int& iterating_variable,bool& blinker ){
     leds[((iterating_variable+3)%NUM_LEDS)] = CRGB::Orange;
     leds[((iterating_variable+4)%NUM_LEDS)] = CRGB::Red;
     iterating_variable++;
-    if (iterating_variable > NUM_LEDS)
+    if (iterating_variable >= NUM_LEDS)
     {
       iterating_variable = 0;
     }

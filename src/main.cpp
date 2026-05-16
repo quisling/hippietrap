@@ -1,4 +1,5 @@
 #include <FastLED.h>
+#undef LITTLE_ENDIAN          // DFRobot_BMI160.h unconditionally redefines this; suppress redefinition warning
 #include <DFRobot_BMI160.h> // BMI160 library
 #include <Wire.h>      // I2C library
 
@@ -26,7 +27,8 @@ uint16_t frame = 0;
 
 CRGB leds[NUM_LEDS];
 
-float fft_input[FFT_SIZE];    // Real signal input
+int32_t fft_raw[FFT_SIZE];        // Raw int32_t PCM samples from I2S
+float fft_input[FFT_SIZE];        // Converted float samples
 float complex_buffer[FFT_SIZE * 2]; // Interleaved real/imaginary data
 // Frequency bands (adjust based on your needs)
 const int bands[] = {60, 250, 500, 1000, 2000, 4000, 6000, 8000}; // Hz
@@ -81,7 +83,7 @@ void i2c_mic_setup(){
     .sample_rate = 8000,  // 8KHz default
     .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
     .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
-    .communication_format = I2S_COMM_FORMAT_I2S,
+    .communication_format = I2S_COMM_FORMAT_STAND_I2S,
     .intr_alloc_flags = 0,
     .dma_buf_count = 4,
     .dma_buf_len = 1024
@@ -95,8 +97,8 @@ void i2c_mic_setup(){
     .data_in_num = MIC_I2C_SD
   };
 
-  i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
-  i2s_set_pin(I2S_NUM_0, &i2s_mic_pins);
+  ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL));
+  ESP_ERROR_CHECK(i2s_set_pin(I2S_NUM_0, &i2s_mic_pins));
 
       // Initialize FFT
   esp_err_t ret = dsps_fft2r_init_fc32(NULL, FFT_SIZE);
@@ -108,13 +110,13 @@ void i2c_mic_setup(){
 void print_mic_data(){
   // read from the I2S device
   size_t bytes_read = 0;
-  i2s_read(I2S_NUM_0, fft_input, FFT_SIZE * sizeof(float), &bytes_read, portMAX_DELAY);
+  i2s_read(I2S_NUM_0, fft_raw, FFT_SIZE * sizeof(int32_t), &bytes_read, portMAX_DELAY);
   int samples_read = bytes_read / sizeof(int32_t);
   // dump the samples out to the serial channel.
   for (int i = 0; i < samples_read; i++)
   {
     #ifdef DEBUG_MODE 
-      Serial.printf("%ld\n", fft_input[i]);
+      Serial.printf("%ld\n", fft_raw[i]);
     #endif
   }
 }
@@ -122,16 +124,19 @@ void print_mic_data(){
 void fastFourierTransformAudio(){
   size_t bytes_read;
   
-  // 3. Read audio samples
-  i2s_read(I2S_NUM_0, fft_input, FFT_SIZE * sizeof(float), &bytes_read, portMAX_DELAY);
+  // 3. Read audio samples into a correctly-typed int32_t buffer
+  i2s_read(I2S_NUM_0, fft_raw, FFT_SIZE * sizeof(int32_t), &bytes_read, portMAX_DELAY);
 
-  // 4. Convert to float and apply window
+  // 4. Generate Hann window, convert samples to float, apply window, build complex buffer
+  float hann_window[FFT_SIZE];
+  dsps_wind_hann_f32(hann_window, FFT_SIZE);
   for (int i = 0; i < FFT_SIZE; i++) {
-    int32_t raw_sample = ((int32_t)fft_input[i]) >> 8;
-    complex_buffer[i * 2] = (float)raw_sample / 8388608.0; // Normalize
-    complex_buffer[i * 2 + 1] = 0;
+    // I2S 32-bit frame: data is in the upper 24 bits, drop the lowest 8
+    int32_t raw_sample = fft_raw[i] >> 8;
+    float normalized = (float)raw_sample / 8388608.0f; // Normalize to [-1, 1]
+    complex_buffer[i * 2]     = normalized * hann_window[i]; // Real, windowed
+    complex_buffer[i * 2 + 1] = 0.0f;                        // Imaginary
   }
-  dsps_wind_hann_f32(complex_buffer, FFT_SIZE);
 
   // 5. Compute FFT
   dsps_fft2r_fc32(complex_buffer, FFT_SIZE);

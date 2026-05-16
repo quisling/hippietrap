@@ -21,16 +21,18 @@ void clockLed(CRGB* leds){
   /*for (auto i = 0; i <= seconds.count(); i++){
     leds[i] = CRGB::Green;
   }*/
-  int ledHour = ((11+ hours.count())%12)*NUM_LEDS_PER_STRIP;
-  int ledMinutes = ((55 + minutes.count()/5)%12)*NUM_LEDS_PER_STRIP;
-  int ledSeconds = ((55 + seconds.count()/5)%12)*NUM_LEDS_PER_STRIP;
-  for (auto i = ledSeconds; i <= ledSeconds+8; i++){
+  int ledHour    = ((11 + hours.count())   % 12) * NUM_LEDS_PER_STRIP;
+  int ledMinutes = ((55 + minutes.count() / 5) % 12) * NUM_LEDS_PER_STRIP;
+  int ledSeconds = ((55 + seconds.count() / 5) % 12) * NUM_LEDS_PER_STRIP;
+
+  // Clamp hand spans so they never write past the end of the leds[] array
+  for (int i = ledSeconds; i <= min(ledSeconds + 8, NUM_LEDS - 1); i++){
     leds[i] = CRGB::White;
   }
-  for (auto i = ledMinutes; i <= ledMinutes+6; i++){
+  for (int i = ledMinutes; i <= min(ledMinutes + 6, NUM_LEDS - 1); i++){
     leds[i] = CRGB::Green;
   }
-  for (auto i = ledHour; i <= ledHour+3; i++){
+  for (int i = ledHour; i <= min(ledHour + 3, NUM_LEDS - 1); i++){
     leds[i] = CRGB::Purple;
   }
   Serial.println("Hello world");
