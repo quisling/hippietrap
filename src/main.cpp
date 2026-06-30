@@ -8,9 +8,15 @@
 #include "dsps_fft2r.h"
 #include "dsps_wind.h"
 
-// Button
-volatile bool buttonPressed = true;
-uint8_t menuChoice = 1;
+// Button state
+volatile uint32_t pressStartMs    = 0;   // millis() when button went down
+volatile bool     releaseDetected = false; // set by ISR on button release
+volatile uint32_t pressDurationMs = 0;   // duration of last press in ms
+
+// Menu / effect state
+uint8_t  activeEffect     = 1;     // 1 = rainbowFlow, 2 = audioSpectrum
+bool     explosionPending = false; // long press queued explosion
+uint8_t  menuChoice       = 1;     // kept for HARDCODED_MENU compatibility
 
 
 #include "effects.h"
@@ -30,10 +36,12 @@ CRGB leds[NUM_LEDS];
 int32_t fft_raw[FFT_SIZE];        // Raw int32_t PCM samples from I2S
 float fft_input[FFT_SIZE];        // Converted float samples
 float complex_buffer[FFT_SIZE * 2]; // Interleaved real/imaginary data
-// Frequency bands (adjust based on your needs)
-const int bands[] = {60, 250, 500, 1000, 2000, 4000, 6000, 8000}; // Hz
-const int numBands = sizeof(bands)/sizeof(bands[0]) - 1;
-float bandMagnitudes[8] = {0}; // Stores magnitude for each band
+// 17 boundaries = 16 bands, log-spaced 60 Hz–20 kHz — one band per arm on LARGE_PARASOL,
+// pairs merged on SMALL_PARASOL (8 arms).
+extern const int bands[] = {60, 100, 160, 250, 400, 630, 1000, 1600,
+                             2500, 4000, 6300, 8000, 10000, 12500, 14000, 16000, 20000};
+extern const int numBands = sizeof(bands)/sizeof(bands[0]) - 1; // = 16
+float bandMagnitudes[16] = {0};
 
 DFRobot_BMI160 bmi160;
 
@@ -43,9 +51,12 @@ bool blinker = true;
 const int8_t i2c_addr = 0x69;
 
 void IRAM_ATTR handleButton() {
-  //fill_solid(leds, NUM_LEDS, CRGB::Green);
-  //FastLED.show();
-  buttonPressed = false;         // Set flag when button is pressed
+  if (digitalRead(BUTTON_PIN_1)) {          // RISING — button pressed down
+    pressStartMs = millis();
+  } else {                                  // FALLING — button released
+    pressDurationMs = millis() - pressStartMs;
+    releaseDetected = true;
+  }
 }
 
 void BMI_setup(){
@@ -78,24 +89,24 @@ void BMI_setup(){
 }
 
 void i2c_mic_setup(){
-  i2s_config_t i2s_config = {
-    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
-    .sample_rate = 8000,  // 8KHz default
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-    .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
-    .communication_format = I2S_COMM_FORMAT_STAND_I2S,
-    .intr_alloc_flags = 0,
-    .dma_buf_count = 4,
-    .dma_buf_len = 1024
-  };
-  
-  // and don't mess around with this
-  i2s_pin_config_t i2s_mic_pins = {
-    .bck_io_num = MIC_I2C_SCK,
-    .ws_io_num = MIC_I2C_WS,
-    .data_out_num = I2S_PIN_NO_CHANGE,
-    .data_in_num = MIC_I2C_SD
-  };
+  i2s_config_t i2s_config = {};
+  i2s_config.mode              = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX);
+  i2s_config.sample_rate       = SAMPLE_RATE;
+  i2s_config.bits_per_sample   = I2S_BITS_PER_SAMPLE_32BIT;
+  i2s_config.channel_format    = I2S_CHANNEL_FMT_ONLY_LEFT;
+  i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+  i2s_config.intr_alloc_flags  = 0;
+  i2s_config.dma_buf_count     = 4;
+  i2s_config.dma_buf_len       = 512;
+  i2s_config.use_apll          = false;
+  i2s_config.tx_desc_auto_clear = false;
+  i2s_config.fixed_mclk        = 0;
+
+  i2s_pin_config_t i2s_mic_pins = {};
+  i2s_mic_pins.bck_io_num   = MIC_I2C_SCK;
+  i2s_mic_pins.ws_io_num    = MIC_I2C_WS;
+  i2s_mic_pins.data_out_num = I2S_PIN_NO_CHANGE;
+  i2s_mic_pins.data_in_num  = MIC_I2C_SD;
 
   ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL));
   ESP_ERROR_CHECK(i2s_set_pin(I2S_NUM_0, &i2s_mic_pins));
@@ -154,7 +165,8 @@ void fastFourierTransformAudio(){
       float imag = complex_buffer[i * 2 + 1];
       bandMagnitudes[band] += sqrtf(real*real + imag*imag);
     }
-    bandMagnitudes[band] /= (endBin - startBin); // Average
+    if (endBin > startBin)
+      bandMagnitudes[band] /= (endBin - startBin); // Average
   }
 
   // 7. Map magnitudes to LEDs
@@ -212,58 +224,29 @@ void fastLedSetup(){
 
 void setup() {
   delay(3000); // sanity delay
-  /*#ifdef DEBUG_MODE){
-    Serial.begin(115200); // Start serial at 115200 baud
-  }*/
+  Serial.begin(115200);
   fastLedSetup();
   FastLED.setBrightness( BRIGHTNESS );
 
   i2c_mic_setup();
 
-  pinMode(BUTTON_PIN_1, INPUT_PULLDOWN); // Use internal pull-up resistor
-  attachInterrupt(BUTTON_PIN_1, handleButton, RISING);
+  pinMode(BUTTON_PIN_1, INPUT_PULLDOWN);
+  attachInterrupt(BUTTON_PIN_1, handleButton, CHANGE);
 
   //BMI_setup();
 }
-void buttonHandler(){
- 
-  if(!buttonPressed)
+void buttonHandler() {
+  if (!releaseDetected) return;
+  releaseDetected = false;        // consume the event
+  iterating_variable = 0;         // reset animation state for whichever effect runs next
 
-  {
-  menuChoice = 99;
-  iterating_variable = 0;
-  buttonPressed = true;
-  }
-
-
-  return;
-  bool setBrightness = false;
-  if (buttonPressed) {
-    #ifdef DEBUG_MODE
-      Serial.println("Button was pressed!");
-    #endif
-    buttonPressed = false;      // Reset flag
-    menuIndicator(leds,menuChoice);
-    FastLED.show();
-    delay(1000);
-    while (buttonPressed){
-      setBrightness = true;
-      buttonPressed = false;
-      brightness+=100;
-      if (brightness >=250) brightness = 10;
-      #ifdef DEBUG_MODE
-        Serial.print("Brightness: "); Serial.println(brightness);
-      #endif
-      FastLED.setBrightness( brightness);
-      FastLED.show();
-      delay(1000);
-    }
-    if (setBrightness) return;
-    menuChoice++;
-    if (menuChoice > MENU_MAX) menuChoice = 1;
-    #ifdef DEBUG_MODE
-      Serial.println(brightness);
-    #endif
+  if (pressDurationMs >= 2000) {
+    // Long press: trigger explosion once, then return to current effect
+    explosionPending = true;
+  } else {
+    // Short press: toggle between rainbowFlow (1) and audioSpectrum (2)
+    activeEffect = (activeEffect == 1) ? 2 : 1;
+    menuChoice = activeEffect;
   }
 }
 
@@ -323,102 +306,33 @@ void blinkLed(int blinks)
 
 void loop()
 {
+  if (HARDCODED_MENU > 0) menuChoice = HARDCODED_MENU;
 
-  #ifdef DEBUG_MODE
-    Serial.println("Hello hello");
-  #endif
-  // Add entropy to random number generator
-  //random16_add_entropy( random());
-  //bmi_loop();
-  //hard code to billmanTest for debug
-
-  
-
-  int width = 10;
-  if (HARDCODED_MENU > 0 )menuChoice = HARDCODED_MENU;
-  //blinkLed(menuChoice);
-
-  switch (menuChoice){
-    case 1:
-      rainbowFlow(leds,iterating_variable);
-      #ifdef DEBUG_MODE
-      Serial.println("Menu Option Rainbow Flow"); 
-      //delay(1000);
-      #endif
-    break;
-    case 2:
-      ringsOutward(leds);
-      
-      #ifdef DEBUG_MODE 
-      Serial.println("Menu Rings Outward"); 
-      //delay(1000);
-      #endif
-    break;
-
-    case 3:
-    break;
-
-    case 4:
-      fastFourierTransformAudio();
-      #ifdef DEBUG_MODE 
-      Serial.println("Menu Option Fourier Transform"); 
-      delay(1000);
-      #endif
-    break;
-
-    case 5:
-      setNumberLeds(leds, blinker);
-      #ifdef DEBUG_MODE 
-      Serial.println("Menu Option Power Test"); // Dont put multiple statements on the same line!
-      delay(1000);
-      #endif
-    break;
-
-    case 6:
-      debugBillman(leds, iterating_variable);
-      #ifdef DEBUG_MODE 
-      Serial.println("Menu Option BillmanTest"); 
-      //delay(1000);
-      #endif
-    break;
-
-    case 7:
-      jellyFish(leds, iterating_variable);
-      #ifdef DEBUG_MODE
-      Serial.println("Menu Option debugBillman"); 
-      delay(1000);
-      #endif
-    break;
-
-    case 99:
-      explosionEffect(leds, iterating_variable);
-      #ifdef DEBUG_MODE
-        Serial.println("Menu Option explosionEffect"); 
-        //delay(1000);
-      #endif
-      if(iterating_variable>2) menuChoice = 1;
-    break;
-
-    default:
-    fill_solid(leds,NUM_LEDS,CRGB::HotPink);
-    FastLED.show();
-    break;
+  if (explosionPending) {
+    // Run explosion phases; when all 3 phases complete (iterating_variable > 2),
+    // clear the flag and return to the previously active effect.
+    explosionEffect(leds, iterating_variable);
+    if (iterating_variable > 2) {
+      explosionPending = false;
+      iterating_variable = 0;
+      menuChoice = activeEffect;
+    }
+  } else {
+    switch (menuChoice) {
+      case 1:
+        rainbowFlow(leds, iterating_variable);
+        break;
+      case 2:
+        audioSpectrum(leds);
+        break;
+      default:
+        fill_solid(leds, NUM_LEDS, CRGB::Black);
+        FastLED.show();
+        break;
+    }
   }
 
-  //print_mic_data();
-  //fastFourierTransformAudio();
   buttonHandler();
-  //FastLED.show(); // display this frame
-  //FastLED.delay(1000 / FRAMES_PER_SECOND);
-  /*frame++;
-  brightness = frame%100;
-  if (brightness>=250){
-    frame = 0;
-  }
-  FastLED.setBrightness( brightness );
-  */
-
-
 }
 
 /*void BMI_loop(){  

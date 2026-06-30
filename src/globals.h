@@ -2,7 +2,7 @@
 
 #include "localSettings.h"
 
-#define DEBUG_MODE false
+#define DEBUG_MODE true
 
 #define MENU_MAX 5
 
@@ -33,6 +33,7 @@
 #define FFT_SIZE 512         // Must be power of 2
 #define MIC_SAMPLE_BITS 32    // INMP441 uses 32-bit frames (24-bit data)
 
+#define GYRO 
 #define BUTTON_PIN_1 48
 
 #define CHIPSET     WS2815
