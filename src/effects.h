@@ -11,3 +11,4 @@ void explosionEffect(CRGB* leds, int& iterating_variable);
 bool ringsOutward(CRGB* leds);
 void fillSpan(CRGB* leds, int startDiode, int stopDiode, CRGB color);
 void audioSpectrum(CRGB* leds);
+void sparklingRain(CRGB* leds);

@@ -4,7 +4,7 @@
 
 #define DEBUG_MODE true
 
-#define MENU_MAX 5
+#define MENU_MAX 6
 
 // Pins for LEDS for SMALL_PARASOL with 8 strips, and base for LARGE_PARASOL
 #define DATA1   14

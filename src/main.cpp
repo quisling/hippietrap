@@ -36,10 +36,10 @@ CRGB leds[NUM_LEDS];
 int32_t fft_raw[FFT_SIZE];        // Raw int32_t PCM samples from I2S
 float fft_input[FFT_SIZE];        // Converted float samples
 float complex_buffer[FFT_SIZE * 2]; // Interleaved real/imaginary data
-// 17 boundaries = 16 bands, log-spaced 60 Hz–20 kHz — one band per arm on LARGE_PARASOL,
-// pairs merged on SMALL_PARASOL (8 arms).
-extern const int bands[] = {60, 100, 160, 250, 400, 630, 1000, 1600,
-                             2500, 4000, 6300, 8000, 10000, 12500, 14000, 16000, 20000};
+// 17 boundaries = 16 bands, log-spaced 60 Hz–8 kHz (Nyquist limit at 16 kHz sample rate).
+// One band per arm on LARGE_PARASOL; adjacent pairs averaged on SMALL_PARASOL (8 arms).
+extern const int bands[] = {60, 80, 110, 150, 200, 270, 370, 500,
+                             680, 920, 1250, 1700, 2300, 3150, 4300, 6000, 8000};
 extern const int numBands = sizeof(bands)/sizeof(bands[0]) - 1; // = 16
 float bandMagnitudes[16] = {0};
 
@@ -244,8 +244,8 @@ void buttonHandler() {
     // Long press: trigger explosion once, then return to current effect
     explosionPending = true;
   } else {
-    // Short press: toggle between rainbowFlow (1) and audioSpectrum (2)
-    activeEffect = (activeEffect == 1) ? 2 : 1;
+    // Short press: cycle forward through effects 1 … MENU_MAX-1
+    activeEffect = (activeEffect % (MENU_MAX - 1)) + 1;
     menuChoice = activeEffect;
   }
 }
@@ -324,6 +324,9 @@ void loop()
         break;
       case 2:
         audioSpectrum(leds);
+        break;
+      case 3:
+        sparklingRain(leds);
         break;
       default:
         fill_solid(leds, NUM_LEDS, CRGB::Black);

@@ -14,22 +14,24 @@ extern const int numBands;          // = 16
 
 // ── Auto-gain constants ───────────────────────────────────────────────────────
 // At 16 kHz sample rate with 512-point FFT: ~31.25 frames/second
-static const int   GAIN_WINDOW_FRAMES = 1875; // 60 s × 31.25 frames/s
-static const float SAT_THRESHOLD      = 0.95f; // fill ≥ 95 % = saturated
-static const float TARGET_SAT_LOW     = 0.30f; // target range low end
-static const float TARGET_SAT_HIGH    = 0.60f; // target range high end
-static const float GAIN_STEP_UP       = 0.02f; // raise gain when too quiet
-static const float GAIN_STEP_DOWN     = 0.05f; // lower gain faster when clipping
+static const int   GAIN_WINDOW_FRAMES = 625;  // 20 s × 31.25 frames/s
+static const float TARGET_FILL        = 0.50f; // target average fill level per band
+static const float GAIN_STEP_UP       = 0.02f; // raise gain when band avg is below target
+static const float GAIN_STEP_DOWN     = 0.05f; // lower gain faster when band avg is above target
 static const float GAIN_MIN           = 0.1f;
 static const float GAIN_MAX           = 50.0f;
 static const int   STARTUP_FRAMES     = 310;   // ~10 s ramp-in period
+static const uint32_t FADE_TIME_MS    = 2000;  // time for display to fall full scale in ms
 
 // ── Static state (persists across frames) ────────────────────────────────────
-static float   gain           = 1.0f;
-static int     frameCount     = 0;
-static uint8_t satHistory[GAIN_WINDOW_FRAMES]; // 1 = frame had a saturated arm
-static int     satHistoryIdx  = 0;
-static int     satCount       = 0; // running sum of satHistory[]
+static float    bandGain[16];                        // per-band gain, initialised to 2.24 (geometric midpoint of GAIN_MIN/GAIN_MAX)
+static float    displayLevel[16];                    // current displayed fill per arm, decays pixel-by-pixel on signal drop
+static uint32_t lastFrameMs = 0;                     // millis() at last frame, for decay timing
+static uint8_t  fillHistory[16][GAIN_WINDOW_FRAMES]; // fill level 0–255 per band per frame
+static uint32_t fillSum[16];                         // running sum per band (max 255×1875 = 478125)
+static int      fillHistoryIdx = 0;                  // shared write index across all bands
+static int      frameCount     = 0;
+static bool     gainInitDone   = false;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // runFFT(): read mic → apply Hann window → FFT → fill bandMagnitudes[]
@@ -118,73 +120,105 @@ static void runFFT() {
 void audioSpectrum(CRGB* leds) {
   runFFT();
 
-  // ── Compute per-arm fill levels ──────────────────────────────────────────
+  // ── One-time initialisation ──────────────────────────────────────────────
+  if (!gainInitDone) {
+    for (int b = 0; b < 16; b++) {
+      bandGain[b]     = 2.24f;
+      fillSum[b]      = 0;
+      displayLevel[b] = 0.0f;
+    }
+    lastFrameMs = millis();
+    memset(fillHistory, 0, sizeof(fillHistory));
+    gainInitDone = true;
+  }
+
+  // ── Compute per-band fill levels and update AGC ──────────────────────────
   float fillLevel[NUM_STRIPS];
 
   for (int arm = 0; arm < NUM_STRIPS; arm++) {
+    // Map arm → band magnitude
     float mag;
-
 #if LARGE_PARASOL
-    // 16 arms, 16 bands — direct 1:1 mapping
-    mag = bandMagnitudes[arm];
+    mag = bandMagnitudes[arm];           // 16 arms, 16 bands — 1:1
 #else
-    // 8 arms, 16 bands — average adjacent pairs
-    mag = (bandMagnitudes[arm * 2] + bandMagnitudes[arm * 2 + 1]) * 0.5f;
+    mag = (bandMagnitudes[arm * 2] + bandMagnitudes[arm * 2 + 1]) * 0.5f; // 8 arms, pair-averaged
 #endif
 
-    fillLevel[arm] = mag * gain;
-    if (fillLevel[arm] > 1.0f) fillLevel[arm] = 1.0f;
-    if (fillLevel[arm] < 0.0f) fillLevel[arm] = 0.0f;
+    // Apply per-band gain, clamp to [0, 1]
+    float fl = mag * bandGain[arm];
+    if (fl > 1.0f) fl = 1.0f;
+    if (fl < 0.0f) fl = 0.0f;
+
+    // Apply startup ramp: blend toward 0.5 for the first STARTUP_FRAMES
+    if (frameCount < STARTUP_FRAMES) {
+      float ramp = (float)frameCount / (float)STARTUP_FRAMES; // 0.0 → 1.0
+      fl = fl * ramp;
+    }
+
+    fillLevel[arm] = fl;
+
+    // ── Rolling average: store fill as uint8_t 0–255 ──────────────────────
+    uint8_t newEntry = (uint8_t)(fl * 255.0f + 0.5f);
+    fillSum[arm] -= fillHistory[arm][fillHistoryIdx];
+    fillHistory[arm][fillHistoryIdx] = newEntry;
+    fillSum[arm] += newEntry;
+
+    // avgFill in [0, 1]
+    float avgFill = (float)fillSum[arm] / ((float)GAIN_WINDOW_FRAMES * 255.0f);
+
+    // Nudge gain toward keeping avgFill at TARGET_FILL
+    if (avgFill < TARGET_FILL) {
+      bandGain[arm] += GAIN_STEP_UP;
+    } else {
+      bandGain[arm] -= GAIN_STEP_DOWN;
+    }
+    if (bandGain[arm] < GAIN_MIN) bandGain[arm] = GAIN_MIN;
+    if (bandGain[arm] > GAIN_MAX) bandGain[arm] = GAIN_MAX;
   }
 
-  // ── Auto-gain: update saturation history ────────────────────────────────
-  uint8_t anySaturated = 0;
-  for (int arm = 0; arm < NUM_STRIPS; arm++) {
-    if (fillLevel[arm] >= SAT_THRESHOLD) { anySaturated = 1; break; }
-  }
-
-  // Subtract oldest entry, insert new one
-  satCount -= satHistory[satHistoryIdx];
-  satHistory[satHistoryIdx] = anySaturated;
-  satCount += anySaturated;
-  satHistoryIdx = (satHistoryIdx + 1) % GAIN_WINDOW_FRAMES;
-
-  // Compute how many frames in the window had saturation
-  float satFraction = (float)satCount / (float)GAIN_WINDOW_FRAMES;
-
-  // During startup, blend computed gain with DEFAULT_GAIN
-  float targetGain = gain;
-  if (satFraction < TARGET_SAT_LOW)       targetGain = gain + GAIN_STEP_UP;
-  else if (satFraction > TARGET_SAT_HIGH) targetGain = gain - GAIN_STEP_DOWN;
-
-  if (frameCount < STARTUP_FRAMES) {
-    float ramp = (float)frameCount / (float)STARTUP_FRAMES; // 0.0 → 1.0
-    targetGain = 1.0f + ramp * (targetGain - 1.0f);
-  }
-
-  gain = targetGain;
-  if (gain < GAIN_MIN) gain = GAIN_MIN;
-  if (gain > GAIN_MAX) gain = GAIN_MAX;
-
+  fillHistoryIdx = (fillHistoryIdx + 1) % GAIN_WINDOW_FRAMES;
   frameCount++;
 
   // ── Debug output ─────────────────────────────────────────────────────────
-  Serial.printf("[AS-5] gain=%.2f sat=%.2f | fill:", gain, satFraction);
+  Serial.printf("[AS-5] gains:");
+  for (int arm = 0; arm < NUM_STRIPS; arm++) {
+    Serial.printf(" %.2f", bandGain[arm]);
+  }
+  Serial.printf(" | fill:");
   for (int arm = 0; arm < NUM_STRIPS; arm++) {
     Serial.printf(" %3d%%", (int)(fillLevel[arm] * 100.0f));
   }
   Serial.println();
 
+  // ── Decay displayed levels toward live signal ────────────────────────────
+  uint32_t now       = millis();
+  uint32_t elapsedMs = now - lastFrameMs;
+  lastFrameMs        = now;
+  // decayPerMs covers the full 0.0–1.0 range in FADE_TIME_MS
+  float decayPerMs   = 1.0f / (float)FADE_TIME_MS;
+  float decayStep    = decayPerMs * (float)elapsedMs;
+
+  for (int arm = 0; arm < NUM_STRIPS; arm++) {
+    if (fillLevel[arm] >= displayLevel[arm]) {
+      // Signal rose — snap up instantly
+      displayLevel[arm] = fillLevel[arm];
+    } else {
+      // Signal dropped — decay one step, but never below the live signal
+      displayLevel[arm] -= decayStep;
+      if (displayLevel[arm] < fillLevel[arm]) displayLevel[arm] = fillLevel[arm];
+    }
+  }
+
   // ── Render LEDs ──────────────────────────────────────────────────────────
   for (int arm = 0; arm < NUM_STRIPS; arm++) {
-    int litCount = (int)(fillLevel[arm] * NUM_LEDS_PER_STRIP + 0.5f);
+    int litCount = (int)(displayLevel[arm] * NUM_LEDS_PER_STRIP + 0.5f);
     int baseIdx  = arm * NUM_LEDS_PER_STRIP;
 
     for (int j = 0; j < NUM_LEDS_PER_STRIP; j++) {
       // j=0 is tip, j=NUM_LEDS_PER_STRIP-1 is hub
       // bar fills inward from hub: LEDs >= (NUM_LEDS_PER_STRIP - litCount) are lit
       if (j >= (NUM_LEDS_PER_STRIP - litCount)) {
-        // Color: blue (hue 160) at tip (j=0), red (hue 0) at hub (j=max)
+        // Color: blue (hue 160) at tip, red (hue 0) at hub
         uint8_t hue = (uint8_t)((160 * (NUM_LEDS_PER_STRIP - 1 - j)) / (NUM_LEDS_PER_STRIP - 1));
         leds[baseIdx + j] = CHSV(hue, 255, 255);
       } else {
